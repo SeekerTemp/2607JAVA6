@@ -31,27 +31,31 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http)
-            throws Exception {http.csrf(csrf
-                    -> csrf.disable()).cors(cors
-                    -> cors.disable()).authorizeHttpRequests(auth
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf
+                // Bỏ cấu hình mặc định CSRF và CORS
+                -> csrf.disable()).cors(cors
+                -> cors.disable()).authorizeHttpRequests(auth
+                // Phân quyền sử dụng
                     -> auth.requestMatchers("/poly/**").authenticated()
                     .anyRequest().permitAll()
                 )
-                .formLogin(form -> form
-                        .loginPage("/login/form")
-                        .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/login/success", true)
-                        .failureUrl("/login/failure")
-                        .permitAll()
-                )
-                .rememberMe(remember ->
-                        remember.tokenValiditySeconds(3 * 24 * 60 * 60)
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login/exit")
-                );
+            // Form đăng nhập mặc định
+            .formLogin(form -> form
+                    .loginPage("/login/form")
+                    .loginProcessingUrl("/login")
+                    .defaultSuccessUrl("/login/success", true)
+                    .failureUrl("/login/failure")
+                    .permitAll()
+            )
+            .rememberMe(remember ->
+                    remember.tokenValiditySeconds(3 * 24 * 60 * 60)
+            )
+            .logout(logout -> logout
+                    .logoutUrl("/logout")
+                    .logoutSuccessUrl("/login/exit")
+            );
         return http.build();
     }
 }
