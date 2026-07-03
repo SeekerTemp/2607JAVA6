@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý người sử dụng</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f2f2f2; }
+    .form-row { margin-bottom: 8px; }
+    label { display: inline-block; width: 90px; }
+    button { margin-right: 6px; }
+    a { margin-right: 8px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h3>QUẢN LÝ NGƯỜI SỬ DỤNG</h3>
+
+    <!-- Form nhập liệu -->
+    <div class="form-row">
+      <label>Username</label>
+      <input type="text" v-model="form.username">
+    </div>
+    <div class="form-row">
+      <label>Password</label>
+      <input type="text" v-model="form.password">
+    </div>
+    <div class="form-row">
+      <label>Fullname</label>
+      <input type="text" v-model="form.fullname">
+    </div>
+    <div class="form-row">
+      <label>Enabled</label>
+      <input type="checkbox" v-model="form.enabled">
+    </div>
+    <div class="form-row">
+      <label>Role</label>
+      <select v-model="form.role">
+        <option value="USER">USER</option>
+        <option value="ADMIN">ADMIN</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <button @click="create">Create</button>
+      <button @click="update">Update</button>
+      <button @click="reset">Reset</button>
+    </div>
+
+    <!-- Bảng danh sách -->
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Fullname</th>
+          <th>Enabled</th>
+          <th>Role</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="u in list" :key="u.username">
+          <td>{{ u.username }}</td>
+          <td>{{ u.fullname }}</td>
+          <td>{{ u.enabled }}</td>
+          <td>{{ u.role }}</td>
+          <td>
+            <a @click="edit(u)">Edit</a>
+            <a @click="remove(u.username)">Delete</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const host = "http://localhost:8081";
+
+    Vue.createApp({
+      data() {
+        return {
+          form: { username: "", password: "", fullname: "", enabled: false, role: "USER" }, // User đang thao tác
+          list: [],       // Danh sách người dùng
+          editing: false  // Cờ đánh dấu đang sửa
+        };
+      },
+      methods: {
+        // Tải danh sách người dùng
+        load() {
+          axios.get(`${host}/accounts`)
+            .then(resp => { this.list = resp.data; })
+            .catch(err => { alert("Lỗi khi tải danh sách người dùng!"); });
+        },
+        // Đưa dữ liệu dòng vào form để sửa
+        edit(u) {
+          this.form = Object.assign({}, u);
+          this.editing = true;
+        },
+        // Thêm mới người dùng
+        create() {
+          axios.post(`${host}/accounts`, this.form)
+            .then(() => { this.load(); this.reset(); })
+            .catch(err => { alert("Lỗi khi thêm người dùng!"); });
+        },
+        // Cập nhật người dùng
+        update() {
+          axios.put(`${host}/accounts/${this.form.username}`, this.form)
+            .then(() => { this.load(); })
+            .catch(err => { alert("Lỗi khi cập nhật người dùng!"); });
+        },
+        // Xóa người dùng
+        remove(username) {
+          axios.delete(`${host}/accounts/${username}`)
+            .then(() => { this.load(); this.reset(); })
+            .catch(err => { alert("Lỗi khi xóa người dùng!"); });
+        },
+        // Xóa trắng form
+        reset() {
+          this.form = { username: "", password: "", fullname: "", enabled: false, role: "USER" };
+          this.editing = false;
+        }
+      },
+      mounted() {
+        // Tải danh sách khi khởi động
+        this.load();
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

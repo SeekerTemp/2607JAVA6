@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý sản phẩm</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f2f2f2; }
+    .form-row { margin-bottom: 8px; }
+    label { display: inline-block; width: 80px; }
+    button { margin-right: 6px; }
+    a { margin-right: 8px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h3>QUẢN LÝ SẢN PHẨM</h3>
+
+    <!-- Form nhập liệu -->
+    <div class="form-row">
+      <label>Id</label>
+      <input type="text" v-model="form.id">
+    </div>
+    <div class="form-row">
+      <label>Name</label>
+      <input type="text" v-model="form.name">
+    </div>
+    <div class="form-row">
+      <label>Price</label>
+      <input type="number" v-model="form.price">
+    </div>
+    <div class="form-row">
+      <label>Date</label>
+      <input type="date" v-model="form.date">
+    </div>
+    <div class="form-row">
+      <label>Category</label>
+      <select v-model="form.categoryId">
+        <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <button @click="create">Create</button>
+      <button @click="update">Update</button>
+      <button @click="reset">Reset</button>
+    </div>
+
+    <!-- Bảng danh sách -->
+    <table>
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Date</th>
+          <th>Category</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="p in list" :key="p.id">
+          <td>{{ p.id }}</td>
+          <td>{{ p.name }}</td>
+          <td>{{ p.price }}</td>
+          <td>{{ p.date }}</td>
+          <td>{{ p.categoryId }}</td>
+          <td>
+            <a @click="edit(p)">Edit</a>
+            <a @click="remove(p.id)">Delete</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const host = "http://localhost:8081";
+
+    Vue.createApp({
+      data() {
+        return {
+          form: { id: "", name: "", price: 0, date: "", categoryId: "" }, // Sản phẩm đang thao tác
+          list: [],        // Danh sách sản phẩm
+          categories: [],  // Danh sách loại hàng cho dropdown
+          editing: false   // Cờ đánh dấu đang sửa
+        };
+      },
+      methods: {
+        // Tải danh sách sản phẩm
+        load() {
+          axios.get(`${host}/products`)
+            .then(resp => { this.list = resp.data; })
+            .catch(err => { alert("Lỗi khi tải danh sách sản phẩm!"); });
+        },
+        // Tải danh sách loại hàng cho dropdown
+        loadCategories() {
+          axios.get(`${host}/categories`)
+            .then(resp => { this.categories = resp.data; })
+            .catch(err => { alert("Lỗi khi tải danh sách loại hàng!"); });
+        },
+        // Đưa dữ liệu dòng vào form để sửa
+        edit(p) {
+          this.form = Object.assign({}, p);
+          this.editing = true;
+        },
+        // Thêm mới sản phẩm
+        create() {
+          axios.post(`${host}/products`, this.form)
+            .then(() => { this.load(); this.reset(); })
+            .catch(err => { alert("Lỗi khi thêm sản phẩm!"); });
+        },
+        // Cập nhật sản phẩm
+        update() {
+          axios.put(`${host}/products/${this.form.id}`, this.form)
+            .then(() => { this.load(); })
+            .catch(err => { alert("Lỗi khi cập nhật sản phẩm!"); });
+        },
+        // Xóa sản phẩm
+        remove(id) {
+          axios.delete(`${host}/products/${id}`)
+            .then(() => { this.load(); this.reset(); })
+            .catch(err => { alert("Lỗi khi xóa sản phẩm!"); });
+        },
+        // Xóa trắng form
+        reset() {
+          this.form = { id: "", name: "", price: 0, date: "", categoryId: "" };
+          this.editing = false;
+        }
+      },
+      mounted() {
+        // Tải cả loại hàng (cho dropdown) và sản phẩm khi khởi động
+        this.loadCategories();
+        this.load();
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

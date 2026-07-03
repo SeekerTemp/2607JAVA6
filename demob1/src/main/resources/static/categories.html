@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý loại hàng</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f2f2f2; }
+    .form-row { margin-bottom: 8px; }
+    label { display: inline-block; width: 80px; }
+    button { margin-right: 6px; }
+    a { margin-right: 8px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h3>QUẢN LÝ LOẠI HÀNG</h3>
+
+    <!-- Form nhập liệu -->
+    <div class="form-row">
+      <label>Id</label>
+      <input type="text" v-model="form.id">
+    </div>
+    <div class="form-row">
+      <label>Name</label>
+      <input type="text" v-model="form.name">
+    </div>
+    <div class="form-row">
+      <button @click="create">Create</button>
+      <button @click="update">Update</button>
+      <button @click="reset">Reset</button>
+    </div>
+
+    <!-- Bảng danh sách -->
+    <table>
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Name</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="c in list" :key="c.id">
+          <td>{{ c.id }}</td>
+          <td>{{ c.name }}</td>
+          <td>
+            <a @click="edit(c)">Edit</a>
+            <a @click="remove(c.id)">Delete</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const host = "http://localhost:8081";
+
+    Vue.createApp({
+      data() {
+        return {
+          form: { id: "", name: "" }, // Đối tượng loại hàng đang thao tác
+          list: [],                    // Danh sách loại hàng
+          editing: false               // Cờ đánh dấu đang sửa
+        };
+      },
+      methods: {
+        // Tải danh sách loại hàng
+        load() {
+          axios.get(`${host}/categories`)
+            .then(resp => { this.list = resp.data; })
+            .catch(err => { alert("Lỗi khi tải danh sách loại hàng!"); });
+        },
+        // Đưa dữ liệu dòng vào form để sửa
+        edit(c) {
+          this.form = Object.assign({}, c);
+          this.editing = true;
+        },
+        // Thêm mới loại hàng
+        create() {
+          axios.post(`${host}/categories`, this.form)
+            .then(() => { this.load(); this.reset(); })
+            .catch(err => { alert("Lỗi khi thêm loại hàng!"); });
+        },
+        // Cập nhật loại hàng
+        update() {
+          axios.put(`${host}/categories/${this.form.id}`, this.form)
+            .then(() => { this.load(); })
+            .catch(err => { alert("Lỗi khi cập nhật loại hàng!"); });
+        },
+        // Xóa loại hàng
+        remove(id) {
+          axios.delete(`${host}/categories/${id}`)
+            .then(() => { this.load(); this.reset(); })
+            .catch(err => { alert("Lỗi khi xóa loại hàng!"); });
+        },
+        // Xóa trắng form
+        reset() {
+          this.form = { id: "", name: "" };
+          this.editing = false;
+        }
+      },
+      mounted() {
+        // Tải danh sách khi khởi động
+        this.load();
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
