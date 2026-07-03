@@ -35,6 +35,7 @@ public class DaoUserDetailsManager implements UserDetailsService {
 
         return User.withUsername(username)
                 .password(password)
+                .disabled(!user.isEnabled()) // tôn trọng cột Enabled trong CSDL
                 .roles(roles)
                 .build();
     }
