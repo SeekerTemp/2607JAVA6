@@ -46,4 +46,12 @@ public class MyController {
                 "@/poly/url4 => method4()");
         return "page";
     }
+
+    // Trang hiển thị khi truy xuất không đúng vai trò (Access Denied)
+    @RequestMapping("/access-denied")
+    public String accessDenied(Model model) {
+        model.addAttribute("message",
+                "Bạn không có quyền truy cập tài nguyên này!");
+        return "access-denied";
+    }
 }
