@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWT Client</title>
+</head>
+<body>
+<h3>LAB 6 - JWT Client</h3>
+<p>Mở Console (F12) để xem kết quả.</p>
+<button onclick="login()">Login</button>
+<button onclick="gotoUrl0()">GET /poly/url0 (public)</button>
+<button onclick="gotoUrl1()">GET /poly/url1 (authenticated)</button>
+<button onclick="gotoUrl3()">GET /poly/url3 (ADMIN)</button>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    let token;
+
+    function login() {
+        var url = "http://localhost:8081/poly/login";
+        var data = {
+            "username": "user@gmail.com",
+            "password": "123"
+        };
+        axios.post(url, data).then(resp => {
+            console.log("post() success", resp.data);
+            token = resp.data.token;
+        }).catch(error => {
+            console.log("post() error", error);
+        });
+    }
+
+    function gotoUrl0() {
+        var url = `http://localhost:8081/poly/url0`;
+        axios.get(url).then(resp => {
+            console.log("get() success", resp.data);
+        }).catch(error => {
+            console.log("get() error", error);
+        });
+    }
+
+    function gotoUrl1() {
+        var url = `http://localhost:8081/poly/url1`;
+        var config = { headers: { "Authorization": `Bearer ${token}` } };
+        axios.get(url, config).then(resp => {
+            console.log("get() success", resp.data);
+        }).catch(error => {
+            console.log("get() error", error);
+        });
+    }
+
+    function gotoUrl3() {
+        var url = `http://localhost:8081/poly/url3`;
+        var config = { headers: { "Authorization": `Bearer ${token}` } };
+        axios.get(url, config).then(resp => {
+            console.log("get() success", resp.data);
+        }).catch(error => {
+            console.log("get() error", error);
+        });
+    }
+</script>
+</body>
+</html>
