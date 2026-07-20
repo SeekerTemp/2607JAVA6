@@ -1,0 +1,20 @@
+Lab 4: Giao tiếp API
+(1đ) Xây dựng 2 project:
+Quản lý sinh viên tại port 8081
+Quản lý điểm sinh viên tại port 8082
+(1đ) GET localhost:8081/api/students/{id} để trả về tên sinh viên
+
+(1đ) POST localhost:8081/api/students để thêm sinh viên
+
+(1đ) GET localhost:8082/api/score/{studentId} trả về danh sách điểm của sinh viên
+
+(1đ) POST localhost:8082/api/score/{studentId} để thêm điểm cho sinh viên
+
+(2đ) GET localhost:8081/api/students/{id}/score để trả về danh sách điểm của sinh viên
+
+(2đ) GET localhost:8082/api/score trả về danh sách gồm tên sinh viên và điểm trung bình
+
+(1đ) Kiến trúc cả 2 project đúng chuẩn 
+- Controller
+- Service
+- Repository
