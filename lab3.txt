@@ -59,3 +59,26 @@ Tạo project mới đồng thời tại cổng 8002, thực hiện các yêu c�
 (1đ) Từ project 8002 gọi sang 8001 lấy dữ liệu danh sách users
 
 (1đ) Từ project 8002 gọi sang 8001 lấy dữ liệu user theo mã
+
+
+========================================================
+CÁCH CHẠY SWAGGER (Lab 3.1 - project b4_lab3_1_DemoRestCtrl, cổng 8001)
+========================================================
+Bước 1: Chạy project cổng 8001
+    cd b4_lab3_1_DemoRestCtrl/demo
+    mvnw.cmd spring-boot:run        (Windows)
+    ./mvnw spring-boot:run          (Mac/Linux)
+
+Bước 2: Mở trình duyệt
+    - Swagger UI:    http://localhost:8001/swagger-ui.html
+    - OpenAPI JSON:  http://localhost:8001/v3/api-docs
+
+Bước 3: Swagger tự động quét toàn bộ @RestController và hiển thị các API
+    (Course / Student / Enrollment / User). Bấm "Try it out" -> "Execute"
+    để gọi thử trực tiếp trên trình duyệt (không cần Postman).
+
+Cấu hình Swagger đã thêm sẵn trong project:
+    - pom.xml: dependency org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9
+    - application.properties: springdoc.swagger-ui.path=/swagger-ui.html
+    - config/OpenApiConfig.java: đặt tiêu đề/mô tả cho trang (tùy chọn)
+Lưu ý: Swagger được sinh tự động lúc chạy app, KHÔNG phải file tĩnh trong source.
