@@ -1,0 +1,61 @@
+Lab 3.1: Làm quen với RESTful API
+
+1. Course API (1đ)
+id (Long)
+title (String)
+description (String)
+instructor (String)
+createdAt (LocalDateTime)
+
+GET /api/courses - Lấy tất cả khóa học
+GET /api/courses/{id} - Lấy một khóa học theo ID
+POST /api/courses - Tạo khóa học mới
+PUT /api/courses/{id} - Cập nhật khóa học theo ID
+DELETE /api/courses/{id} - Xóa khóa học theo ID
+
+2. Student API (1đ)
+id (Long)
+name (String)
+email (String)
+registeredAt (LocalDateTime)
+
+GET /api/students - Lấy danh sách học viên
+GET /api/students/{id} - Lấy học viên theo ID
+POST /api/students - Tạo học viên mới
+PUT /api/students/{id} - Cập nhật học viên theo ID
+DELETE /api/students/{id} - Xóa học viên theo ID
+
+3. Enrollment API (Đăng ký học) (1đ)
+id (Long)
+studentId (Long)
+courseId (Long)
+enrolledAt (LocalDateTime)
+
+GET /api/enrollments - Lấy tất cả lượt đăng ký
+GET /api/enrollments/{id} - Lấy chi tiết đăng ký theo ID
+POST /api/enrollments - Đăng ký học viên vào khóa học
+DELETE /api/enrollments/{id} - Hủy đăng ký học theo ID
+
+4. Bổ sung thêm (1đ)
+Lấy danh sách học viên của một khóa học /api/courses/{courseId}/students
+Lấy danh sách khóa học mà một học viên đã đăng ký /api/students/{studentId}/courses
+Lấy tất cả lượt đăng ký của một học viên (bao gồm thông tin khóa học) /api/students/{studentId}/enrollments
+Lấy tất cả lượt đăng ký của một khóa học (bao gồm thông tin học viên) /api/courses/{courseId}/enrollments
+
+5. Sử dụng Swagger (1đ)
+
+
+Lab 3.2
+Chạy project demo 3.1 trên lớp tại cổng 8001
+
+Tạo project mới đồng thời tại cổng 8002, thực hiện các yêu cầu tương đương với https://67414054e4647499008d305b.mockapi.io/api/v1/companies
+
+(1đ) Chạy đồng thời
+
+(1đ) Hiển thị danh sách thành công với project tại cổng 8002 (gồm: id, name)
+
+(1đ) Hiển thị chi tiết đối tượng theo mã với project tại cổng 8002
+
+(1đ) Từ project 8002 gọi sang 8001 lấy dữ liệu danh sách users
+
+(1đ) Từ project 8002 gọi sang 8001 lấy dữ liệu user theo mã
