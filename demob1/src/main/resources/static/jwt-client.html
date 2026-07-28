@@ -18,7 +18,7 @@
     let token;
 
     function login() {
-        var url = "http://localhost:8081/poly/login";
+        var url = "http://localhost:8080/poly/login";
         var data = {
             "username": "user@gmail.com",
             "password": "123"
@@ -32,7 +32,7 @@
     }
 
     function gotoUrl0() {
-        var url = `http://localhost:8081/poly/url0`;
+        var url = `http://localhost:8080/poly/url0`;
         axios.get(url).then(resp => {
             console.log("get() success", resp.data);
         }).catch(error => {
@@ -41,7 +41,7 @@
     }
 
     function gotoUrl1() {
-        var url = `http://localhost:8081/poly/url1`;
+        var url = `http://localhost:8080/poly/url1`;
         var config = { headers: { "Authorization": `Bearer ${token}` } };
         axios.get(url, config).then(resp => {
             console.log("get() success", resp.data);
@@ -51,7 +51,7 @@
     }
 
     function gotoUrl3() {
-        var url = `http://localhost:8081/poly/url3`;
+        var url = `http://localhost:8080/poly/url3`;
         var config = { headers: { "Authorization": `Bearer ${token}` } };
         axios.get(url, config).then(resp => {
             console.log("get() success", resp.data);

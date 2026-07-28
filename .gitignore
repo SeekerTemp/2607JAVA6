@@ -1,0 +1,12 @@
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Build output
+target/
+build/
+
+# Local reference docs (keep lab PDFs OUTSIDE the repo to avoid loss on branch switch)
+*.pdf
+docs/

@@ -1,5 +1,6 @@
 package com.vn.test.demob1.LAB.security;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.io.IOException;
 
 /**
  * LAB 6 - Bài 3: Phân quyền REST API và xác thực bằng JWT (STATELESS).
@@ -41,11 +44,33 @@ public class SecurityConfig {
         http.csrf(config -> config.disable()).cors(config -> config.disable());
 
         http.authorizeHttpRequests(config -> {
+            // LAB 6 - Bài 3
             config.requestMatchers("/poly/url1").authenticated();
             config.requestMatchers("/poly/url2").hasRole("USER");
             config.requestMatchers("/poly/url3").hasRole("ADMIN");
             config.requestMatchers("/poly/url4").hasAnyRole("USER", "ADMIN");
+
+            // ASM LAB 6
+            config.requestMatchers("/jwt-generator", "/jwt-decoder/**", "/login").permitAll();
+            config.requestMatchers("/user").hasRole("USER");
+            config.requestMatchers("/admin").hasRole("ADMIN");
+            config.requestMatchers("/logout").authenticated();
+
             config.anyRequest().permitAll();
+        });
+
+        // Vô hiệu hóa LogoutFilter mặc định của Spring Security (nó chiếm POST /logout)
+        // để AsmJwtApi.logout() tự xử lý việc vô hiệu hóa JWT.
+        http.logout(logout -> logout.disable());
+
+        // Chưa đăng nhập -> 401, sai vai trò -> 403 (kèm JSON thay vì trang HTML)
+        http.exceptionHandling(handling -> {
+            handling.authenticationEntryPoint((request, response, ex) -> writeError(
+                    response, HttpServletResponse.SC_UNAUTHORIZED,
+                    "Yêu cầu JWT hợp lệ ở header: Authorization: Bearer <jwt>"));
+            handling.accessDeniedHandler((request, response, ex) -> writeError(
+                    response, HttpServletResponse.SC_FORBIDDEN,
+                    "Tài khoản không có quyền truy xuất tài nguyên này"));
         });
 
         // Không duy trì user trong session (STATELESS)
@@ -61,5 +86,13 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
+    }
+
+    /** Trả lỗi dạng JSON cho REST client. */
+    private static void writeError(HttpServletResponse response, int status, String message)
+            throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write("{\"error\":\"" + message + "\"}");
     }
 }

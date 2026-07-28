@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASM LAB 6 - JWT Client</title>
+    <style>
+        body { font-family: Segoe UI, Arial, sans-serif; margin: 24px; max-width: 900px; }
+        fieldset { margin-bottom: 16px; border: 1px solid #ccc; }
+        legend { font-weight: bold; }
+        button { padding: 6px 12px; margin: 4px 4px 4px 0; cursor: pointer; }
+        input { padding: 5px; }
+        #out { background: #1e1e1e; color: #d4d4d4; padding: 12px; min-height: 160px;
+               white-space: pre-wrap; word-break: break-all; border-radius: 4px; }
+        code { background: #eee; padding: 1px 4px; }
+    </style>
+</head>
+<body>
+<h3>ASM LAB 6 - JWT</h3>
+
+<fieldset>
+    <legend>Tài khoản</legend>
+    username: <input id="username" value="user@gmail.com" size="22">
+    password: <input id="password" value="123" size="8">
+    <br>
+    <small>user@gmail.com (USER) · admin@gmail.com (ADMIN) · both@gmail.com (USER+ADMIN) · mật khẩu: 123</small>
+</fieldset>
+
+<fieldset>
+    <legend>Tạo / giải mã JWT</legend>
+    <button onclick="generate()">GET /jwt-generator</button>
+    <button onclick="decode()">GET /jwt-decoder/{jwt}</button>
+</fieldset>
+
+<fieldset>
+    <legend>Đăng nhập &amp; tài nguyên phân quyền</legend>
+    <button onclick="login()">POST /login</button>
+    <button onclick="get('/user')">GET /user (USER)</button>
+    <button onclick="get('/admin')">GET /admin (ADMIN)</button>
+    <button onclick="logout()">POST /logout</button>
+</fieldset>
+
+<p>Token hiện tại: <code id="token">(chưa có)</code></p>
+<div id="out">Kết quả sẽ hiện ở đây...</div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    let token = null;
+
+    function show(label, data) {
+        document.getElementById("out").textContent =
+            label + "\n" + JSON.stringify(data, null, 2);
+        console.log(label, data);
+    }
+
+    function fail(label, error) {
+        var resp = error.response;
+        show(label + " -> LỖI " + (resp ? resp.status : ""), resp ? resp.data : String(error));
+    }
+
+    function setToken(value) {
+        token = value;
+        document.getElementById("token").textContent = value || "(chưa có)";
+    }
+
+    function authConfig() {
+        return { headers: { "Authorization": `Bearer ${token}` } };
+    }
+
+    function credentials() {
+        return {
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value
+        };
+    }
+
+    function generate() {
+        var user = credentials();
+        var url = `/jwt-generator?username=${encodeURIComponent(user.username)}`
+                + `&password=${encodeURIComponent(user.password)}`;
+        axios.get(url).then(resp => {
+            setToken(resp.data.token);
+            show("GET /jwt-generator", resp.data);
+        }).catch(error => fail("GET /jwt-generator", error));
+    }
+
+    function decode() {
+        if (!token) { return show("GET /jwt-decoder", "Chưa có token, hãy bấm /jwt-generator hoặc /login trước."); }
+        axios.get(`/jwt-decoder/${token}`).then(resp => {
+            show("GET /jwt-decoder/{jwt}", resp.data);
+        }).catch(error => fail("GET /jwt-decoder/{jwt}", error));
+    }
+
+    function login() {
+        axios.post("/login", credentials()).then(resp => {
+            setToken(resp.data.token);
+            show("POST /login", resp.data);
+        }).catch(error => fail("POST /login", error));
+    }
+
+    function get(url) {
+        axios.get(url, authConfig()).then(resp => {
+            show("GET " + url, resp.data);
+        }).catch(error => fail("GET " + url, error));
+    }
+
+    function logout() {
+        axios.post("/logout", {}, authConfig()).then(resp => {
+            show("POST /logout (token vừa dùng đã bị vô hiệu hóa)", resp.data);
+        }).catch(error => fail("POST /logout", error));
+    }
+</script>
+</body>
+</html>
