@@ -1,0 +1,12 @@
+body { font-family: Arial, sans-serif; margin: 20px; }
+nav { margin-bottom: 15px; }
+nav a { margin-right: 12px; }
+nav a.router-link-active { font-weight: bold; text-decoration: none; }
+table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+th { background: #f2f2f2; }
+.form-row { margin-bottom: 8px; }
+.form-row label { display: inline-block; width: 90px; }
+button { margin-right: 6px; }
+table a { margin-right: 8px; cursor: pointer; color: #06c; }
+.msg { padding: 6px 0; color: #c00; }
