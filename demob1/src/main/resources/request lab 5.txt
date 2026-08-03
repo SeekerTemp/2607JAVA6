@@ -1,90 +1,45 @@
 Lab 5: JWT
-
 Dựa vào bài Lab 6 trong khung chương trình, thực hiện:
-- (1đ) GET  localhost:8080/jwt-generator     -> INPUT: username và password -> OUTPUT: Chuỗi JWT tương ứng
-- (1đ) GET  localhost:8080/jwt-decoder/{jwt} -> INPUT: Chuỗi JWT -> OUTPUT: Tên tài khoản và ngày hết hạn
-- (2đ) POST localhost:8080/login             -> Nhận username và password -> Xác thực hợp lệ thì trả về chuỗi JWT
-- (2đ) GET  localhost:8080/user              -> INPUT: Chuỗi JWT -> Chỉ cho phép tài khoản vai người dùng
-- (2đ) GET  localhost:8080/admin             -> INPUT: Chuỗi JWT -> Chỉ cho phép tài khoản vai quản trị viên
-- (2đ) POST localhost:8080/logout            -> INPUT: Chuỗi JWT -> Vô hiệu hóa chuỗi JWT, không sử dụng được
+- (1đ) GET localhost:8080/jwt-generator -> INPUT: username và password -> OUTPUT: Chuỗi JWT tương ứng
+- (1đ) GET localhost:8080/jwt-decoder/{jwt} -> INPUT: Chuỗi JWT -> OUTPUT: Tên tài khoản và ngày hết hạn
+
+- (2đ) POST localhost:8080/login -> Nhận username và password -> Xác thực thông tin đăng nhập hợp lệ thì trả về chuỗi JWT
+
+- (2đ) GET localhost:8080/user -> INPUT: Chuỗi JWT -> Chỉ cho phép tài khoản vai người dùng
+- (2đ) GET localhost:8080/admin -> INPUT: Chuỗi JWT -> Chỉ cho phép tài khoản vai quản trị viên
+
+- (2đ) POST localhost:8080/logout -> INPUT: Chuỗi JWT -> Vô hiệu hóa chuỗi JWT, không sử dụng được
 
 
-==========================================================
-CÁCH CHẠY (branch asm/lab5)
-==========================================================
+======================= CÁCH CHẠY (branch asm/lab5) =======================
 
-1) CHẠY ỨNG DỤNG
-   cd demob1
-   mvnw.cmd spring-boot:run
-   -> http://localhost:8080   (đề bài yêu cầu cổng 8080)
+cd demob1
+mvnw.cmd spring-boot:run          ->  http://localhost:8080
 
-   Đây là REST API thuần, không có giao diện web. Kiểm thử bằng Postman.
+Tài khoản:  user@gmail.com / 123   (USER)
+            admin@gmail.com / 123  (ADMIN)
+            both@gmail.com / 123   (USER + ADMIN)
 
-2) TÀI KHOẢN (khai báo InMemory trong LAB/security/SecurityConfig.java)
-   user@gmail.com  / 123  -> USER
-   admin@gmail.com / 123  -> ADMIN
-   both@gmail.com  / 123  -> USER, ADMIN
 
-3) CÁC BƯỚC KIỂM THỬ TRÊN POSTMAN
+======================= POSTMAN =======================
 
-   a) Lấy JWT không cần xác thực:
-      GET http://localhost:8080/jwt-generator?username=user@gmail.com&password=123
-      -> {"username":"...", "jwt":"eyJ..."}
+1. GET  http://localhost:8080/jwt-generator?username=user@gmail.com&password=123
 
-   b) Đăng nhập (có xác thực mật khẩu):
-      POST http://localhost:8080/login
-      Body -> raw -> JSON:
-         {"username":"admin@gmail.com","password":"123"}
-      -> {"username":"...", "roles":["ROLE_ADMIN"], "jwt":"eyJ..."}
-      Sai mật khẩu -> 401 {"error":"Sai tên đăng nhập hoặc mật khẩu!"}
+2. POST http://localhost:8080/login
+        Body -> raw -> JSON:
+        {"username":"user@gmail.com","password":"123"}
 
-   c) Giải mã JWT:
-      GET http://localhost:8080/jwt-decoder/<dán chuỗi jwt vào đây>
-      -> {"username":"...", "expiration":"03/08/2026 09:40:42", "expired":false}
-      Chuỗi sai -> 400 {"error":"Chuỗi JWT không hợp lệ!"}
+3. GET  http://localhost:8080/jwt-decoder/<jwt>
 
-   d) Gọi tài nguyên có phân quyền — thêm header:
-         Authorization: Bearer <chuỗi jwt>
-      GET http://localhost:8080/user    (chỉ ROLE_USER)
-      GET http://localhost:8080/admin   (chỉ ROLE_ADMIN)
+4. GET  http://localhost:8080/user
+        Header: Authorization: Bearer <jwt>
 
-      Ma trận kết quả đã kiểm chứng:
-                            /user   /admin
-         user@gmail.com      200     403
-         admin@gmail.com     403     200
-         both@gmail.com      200     200
-         không có token      403     403
+5. GET  http://localhost:8080/admin
+        Header: Authorization: Bearer <jwt>
 
-   e) Đăng xuất (vô hiệu hóa token):
-      POST http://localhost:8080/logout
-      Header: Authorization: Bearer <chuỗi jwt>
-      -> {"message":"Đã đăng xuất, ...", "username":"..."}
-      Sau đó gọi lại /user bằng đúng token đó -> 403.
-      Token khác của cùng tài khoản vẫn dùng được bình thường.
+6. POST http://localhost:8080/logout
+        Header: Authorization: Bearer <jwt>
+        Không có Body.
+        Sau bước này gọi lại (4) bằng đúng <jwt> đó -> 403, không còn thông tin user.
 
-4) CHẠY TEST
-   cd demob1
-   mvnw.cmd test        <- 16 test
-
-   Lưu ý: "mvnw clean" bị lỗi khi không có mạng (maven-clean-plugin thiếu
-   plexus-utils trong ~/.m2). Cần build sạch thì xóa thư mục demob1/target/
-   bằng tay rồi chạy mvnw.cmd test.
-
-5) CẤU TRÚC JAVA  (demob1/src/main/java/com/vn/test/demob1/LAB/)
-   model/       LoginRequest                      (POJO thuần, không Lombok)
-   service/     JwtService          - tạo / giải mã / kiểm tra hạn JWT
-                TokenBlacklistService - danh sách token đã đăng xuất
-   security/    SecurityConfig      - tài khoản InMemory + phân quyền URL
-                JwtAuthFilter       - đọc header Authorization, tự đăng nhập
-   controller/  JwtController       - 6 endpoint của đề bài
-
-6) GHI CHÚ KỸ THUẬT
-   - JWT là stateless nên server không "xóa" được token đã phát hành. Cách
-     làm: mỗi token mang một mã riêng (claim "jti"); /logout lưu mã đó vào
-     TokenBlacklistService, JwtAuthFilter từ chối mọi token nằm trong danh
-     sách. Danh sách ở trong bộ nhớ nên mất khi khởi động lại server.
-   - /jwt-generator theo đúng đề bài chỉ SINH token, không kiểm tra mật khẩu.
-     Việc xác thực là nhiệm vụ của /login. Vai trò không nằm trong token mà
-     được nạp lại từ danh sách tài khoản ở mỗi request.
-   - Bị từ chối quyền trả về 403 (không phải 401) vì API không bật cơ chế
-     đăng nhập mặc định nào của Spring Security.
+Chạy test:  mvnw.cmd test          -> 19 test

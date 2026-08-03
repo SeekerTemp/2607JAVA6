@@ -53,6 +53,33 @@ class JwtApiTests {
                 .andExpect(jsonPath("$.jwt").value(org.hamcrest.Matchers.matchesRegex("[^.]+\\.[^.]+\\.[^.]+")));
     }
 
+    @Test
+    void jwtGeneratorRejectsWrongPassword() throws Exception {
+        mvc.perform(get("/jwt-generator")
+                        .param("username", "user@gmail.com")
+                        .param("password", "sai"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error").value("Sai tên đăng nhập hoặc mật khẩu!"));
+    }
+
+    @Test
+    void jwtGeneratorRejectsUnknownAccount() throws Exception {
+        mvc.perform(get("/jwt-generator")
+                        .param("username", "khongtontai@gmail.com")
+                        .param("password", "123"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void jwtGeneratorRequiresBothParameters() throws Exception {
+        // Thiếu password -> 400 (không phải 401)
+        mvc.perform(get("/jwt-generator").param("username", "user@gmail.com"))
+                .andExpect(status().isBadRequest());
+        // Thiếu username -> 400
+        mvc.perform(get("/jwt-generator").param("password", "123"))
+                .andExpect(status().isBadRequest());
+    }
+
     // ---------- (1đ) GET /jwt-decoder/{jwt} ----------
 
     @Test

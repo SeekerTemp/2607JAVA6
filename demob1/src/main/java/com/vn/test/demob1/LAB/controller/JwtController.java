@@ -15,7 +15,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,25 +63,14 @@ public class JwtController {
     /**
      * (1đ) Sinh JWT từ username và password truyền vào.
      * <p>
-     * Theo đề bài, endpoint này chỉ <b>tạo</b> token chứ không xác thực đăng
-     * nhập - việc xác thực là nhiệm vụ của {@link #login}. Vai trò của token
-     * không nằm trong token mà được nạp lại từ danh sách tài khoản mỗi request,
-     * nên token sinh ở đây vẫn dùng được cho /user và /admin nếu username có
-     * đúng vai trò đó.
+     * Cả hai tham số đều bắt buộc; thiếu một tham số trả về 400, sai tài khoản
+     * hoặc mật khẩu trả về 401.
      */
     @GetMapping("/jwt-generator")
     public Object generate(@RequestParam("username") String username,
                            @RequestParam("password") String password) {
-        UserDetails user = User.withUsername(username)
-                .password(password)
-                .authorities(Collections.emptyList())
-                .build();
-        String jwt = jwtService.create(user, JwtService.EXPIRY_SECONDS);
-
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("username", username);
-        result.put("jwt", jwt);
-        return result;
+        UserDetails user = this.authenticate(username, password);
+        return this.tokenResponse(user);
     }
 
     /**
@@ -109,18 +96,8 @@ public class JwtController {
      */
     @PostMapping("/login")
     public Object login(@RequestBody LoginRequest request) {
-        var authInfo = new UsernamePasswordAuthenticationToken(
-                request.getUsername(), request.getPassword());
-        Authentication authentication = authenticationManager.authenticate(authInfo);
-
-        UserDetails user = (UserDetails) authentication.getPrincipal();
-        String jwt = jwtService.create(user, JwtService.EXPIRY_SECONDS);
-
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("username", user.getUsername());
-        result.put("roles", roleNames(user));
-        result.put("jwt", jwt);
-        return result;
+        UserDetails user = this.authenticate(request.getUsername(), request.getPassword());
+        return this.tokenResponse(user);
     }
 
     /**
@@ -155,6 +132,25 @@ public class JwtController {
 
     // ---------- hỗ trợ ----------
 
+    /**
+     * Xác thực username/password với danh sách tài khoản.
+     * Sai thông tin sẽ ném {@link AuthenticationException} -> 401.
+     */
+    private UserDetails authenticate(String username, String password) {
+        var authInfo = new UsernamePasswordAuthenticationToken(username, password);
+        Authentication authentication = authenticationManager.authenticate(authInfo);
+        return (UserDetails) authentication.getPrincipal();
+    }
+
+    /** Phản hồi chung cho /jwt-generator và /login. */
+    private Object tokenResponse(UserDetails user) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("username", user.getUsername());
+        result.put("roles", roleNames(user));
+        result.put("jwt", jwtService.create(user, JwtService.EXPIRY_SECONDS));
+        return result;
+    }
+
     private Object greeting(String message, Authentication authentication) {
         UserDetails user = (UserDetails) authentication.getPrincipal();
 
@@ -172,7 +168,7 @@ public class JwtController {
                 .toList();
     }
 
-    /** Sai tài khoản hoặc mật khẩu khi gọi /login. */
+    /** Sai tài khoản hoặc mật khẩu khi gọi /jwt-generator hoặc /login. */
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<Object> handleAuthError(AuthenticationException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
