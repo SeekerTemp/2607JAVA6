@@ -6,7 +6,23 @@ Thực hiện theo Bài Lab 8 khung chương trình
 - Cho phép nhắn tin riêng (2đ)
 - Lưu lịch sử tin nhắn (2đ)
 
-Chay: mo terminal tai thu muc demob1 -> mvnw.cmd spring-boot:run
+===========================================================
+0. CACH CHAY
+===========================================================
+Cach 1 - IntelliJ (khuyen dung):
+  1. File -> Open -> chon thu muc LAB (hoac mo thang LAB\demob1)
+  2. Cho IntelliJ import Maven xong (goc phai duoi chay het thanh tien trinh)
+  3. Mo Demob1Application.java -> bam nut Run mau xanh
+  4. Log hien "Started Demob1Application" -> vao http://localhost:8081
+
+  Project SDK: JDK 17 (may dang cai Temurin 17).
+  Neu IntelliJ bao SDK khong hop le:
+    File -> Project Structure -> Project -> SDK -> chon jdk-17...-hotspot
+
+Cach 2 - dong lenh:
+  mo terminal tai thu muc demob1 -> mvnw.cmd spring-boot:run
+
+Dung app: Ctrl + C (dong lenh) hoac nut Stop mau do (IntelliJ).
 
 ===========================================================
 1. URI
@@ -56,3 +72,26 @@ Chat rieng (2d): Panel 2 chon "Chat rieng voi Chi Pheo", Panel 3 chon
 Luu lich su (2d): kenh chung KHONG nap tin cu (vao sau khong thay tin truoc do);
             chat rieng bam Connect lai thi tu nap full lich su tu H2.
             Tat app roi bat lai -> bang CHAT_HISTORY trong (H2 in-memory).
+
+===========================================================
+4. LOI THUONG GAP
+===========================================================
+"Port 8081 was already in use"
+  Con mot lan chay cu chua tat. Xem PID va tat:
+    netstat -ano | findstr :8081
+    taskkill /PID <pid> /F
+  Hoac doi port:
+    mvnw.cmd spring-boot:run -Dspring-boot.run.arguments=--server.port=8090
+
+Bam Connect nhung den bao van do
+  Trang nap Vue / SockJS / StompJs tu CDN nen may phai co mang.
+
+H2 console bao sai JDBC URL
+  Phai dien dung jdbc:h2:mem:chatdb, user sa, password de trong.
+
+Chat rieng khong nap lai lich su
+  Lich su chi nap khi bam Connect. Neu da tat server thi du lieu da reset,
+  dung nhu yeu cau cua bai (H2 in-memory).
+
+Sua code xong chay lai van thay giao dien cu
+  Trinh duyet cache -> bam Ctrl + F5.
