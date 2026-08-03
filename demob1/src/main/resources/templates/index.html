@@ -33,6 +33,10 @@
         .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
         .subtitle code { background: var(--card); padding: 1px 6px; border-radius: 4px; }
 
+        /* Có aside thì chừa một cột hẹp bên phải cho danh sách online */
+        .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+        .layout.with-aside { grid-template-columns: minmax(0, 1fr) 230px; }
+
         .panels {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -40,8 +44,46 @@
         }
 
         @media (max-width: 1000px) {
+            .layout, .layout.with-aside { grid-template-columns: 1fr; }
             .panels { grid-template-columns: 1fr; }
         }
+
+        .aside {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden;
+            position: sticky;
+            top: 24px;
+        }
+
+        .aside-head {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--line);
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .aside-body { padding: 10px 12px; }
+
+        .aside ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+
+        .aside li {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 13px;
+            background: var(--card-2);
+            border-radius: 7px;
+            padding: 6px 9px;
+        }
+
+        .aside li .tag { margin-left: auto; font-size: 11px; color: var(--muted); }
+        .aside .empty { font-size: 12px; color: var(--muted); }
+        .aside .note { font-size: 11px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
 
         .panel {
             background: var(--card);
@@ -142,10 +184,36 @@
         mỗi lần Connect. Tắt server rồi bật lại thì dữ liệu reset.
     </p>
 
-    <div class="panels">
-        <chat-panel title="Panel 1 - Kênh chung" role="general"></chat-panel>
-        <chat-panel title="Panel 2 - Tài khoản" role="account" default-username="u2"></chat-panel>
-        <chat-panel title="Panel 3 - Tài khoản" role="account" default-username="u3"></chat-panel>
+    <div class="layout" :class="{ 'with-aside': store.loggedIn > 0 }">
+        <div class="panels">
+            <chat-panel title="Panel 1 - Kênh chung" role="general"></chat-panel>
+            <chat-panel title="Panel 2 - Tài khoản" role="account" default-username="u2"></chat-panel>
+            <chat-panel title="Panel 3 - Tài khoản" role="account" default-username="u3"></chat-panel>
+        </div>
+
+        <!-- Chỉ hiện khi đã có tài khoản đăng nhập -->
+        <aside class="aside" v-if="store.loggedIn > 0">
+            <div class="aside-head">
+                <span :class="['dot', store.connected > 0 ? 'on' : '']"></span>
+                Đang online ({{ store.onlineUsers.length }})
+            </div>
+            <div class="aside-body">
+                <ul v-if="onlineGroups.length">
+                    <li v-for="g in onlineGroups" :key="g.name">
+                        <span class="dot on"></span>
+                        <span>{{ g.name }}</span>
+                        <span class="tag" v-if="g.count > 1">{{ g.count }} kết nối</span>
+                    </li>
+                </ul>
+                <div class="empty" v-else>
+                    Chưa có ai kết nối. Bấm <b>Connect</b> ở một panel để vào phòng.
+                </div>
+                <div class="note">
+                    Mỗi lần Connect là một phiên riêng, nên cùng một tài khoản mở nhiều
+                    panel/tab sẽ được đếm thành nhiều kết nối.
+                </div>
+            </div>
+        </aside>
     </div>
 </div>
 
@@ -156,6 +224,18 @@
 
 <script>
     const PUBLIC_CHANNEL = "public";
+
+    /**
+     * Trạng thái dùng chung cho aside "Đang online":
+     *  - loggedIn: số panel đã đăng nhập (aside chỉ hiện khi > 0)
+     *  - connected: số panel đang kết nối, về 0 thì xoá danh sách cho khỏi hiển thị dữ liệu cũ
+     *  - onlineUsers: danh sách server phát kèm tin JOIN/LEAVE
+     */
+    const store = Vue.reactive({
+        loggedIn: 0,
+        connected: 0,
+        onlineUsers: []
+    });
 
     // Tên phòng chat riêng phải trùng quy ước với ChatController.privateRoom() ở server
     function privateRoom(a, b) {
@@ -222,6 +302,7 @@
                         return;
                     }
                     this.account = data;
+                    store.loggedIn++;
                     const users = await (await fetch("/api/users")).json();
                     this.partners = users.filter(u => u.username !== data.username);
                 } catch (e) {
@@ -231,6 +312,9 @@
 
             logout() {
                 this.disconnect();
+                if (this.account) {
+                    store.loggedIn--;
+                }
                 this.account = null;
                 this.partners = [];
                 this.history = { public: [] };
@@ -244,6 +328,7 @@
 
                 this.client.onConnect = () => {
                     this.connected = true;
+                    store.connected++;
 
                     // Kênh chung
                     this.client.subscribe("/topic/public", frame => {
@@ -251,6 +336,7 @@
                         this.push(PUBLIC_CHANNEL, msg);
                         if (msg.users) {
                             this.onlineUsers = msg.users;
+                            store.onlineUsers = msg.users;
                         }
                     });
 
@@ -282,6 +368,13 @@
                 if (this.client) {
                     this.client.deactivate();
                     this.client = null;
+                }
+                if (this.connected) {
+                    store.connected--;
+                    // Không còn panel nào kết nối thì aside không có nguồn cập nhật nữa
+                    if (store.connected === 0) {
+                        store.onlineUsers = [];
+                    }
                 }
                 this.connected = false;
                 this.onlineUsers = [];
@@ -429,7 +522,23 @@
         </div>`
     };
 
-    Vue.createApp({ components: { ChatPanel } }).mount("#app");
+    Vue.createApp({
+        components: { ChatPanel },
+        data() {
+            return { store };
+        },
+        computed: {
+            /**
+             * Gom các phiên trùng tên lại để aside hiển thị "Thị Nở - 2 kết nối"
+             * thay vì lặp lại cùng một cái tên.
+             */
+            onlineGroups() {
+                const counter = new Map();
+                store.onlineUsers.forEach(name => counter.set(name, (counter.get(name) || 0) + 1));
+                return [...counter].map(([name, count]) => ({ name, count }));
+            }
+        }
+    }).mount("#app");
 </script>
 </body>
 </html>

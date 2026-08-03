@@ -1,0 +1,58 @@
+LAB 7 - SOCKET CHAT (Spring Boot WebSocket)
+Lab 7: Socket - Chat
+Thực hiện theo Bài Lab 8 khung chương trình
+- Bài 1 (3đ)
+- Bài 2 (3đ)
+- Cho phép nhắn tin riêng (2đ)
+- Lưu lịch sử tin nhắn (2đ)
+
+Chay: mo terminal tai thu muc demob1 -> mvnw.cmd spring-boot:run
+
+===========================================================
+1. URI
+===========================================================
+Trang chat        : http://localhost:8081
+H2 console        : http://localhost:8081/h2-console
+
+WebSocket endpoint: /ws
+  Bai 1 - chat chung : gui /app/chat        -> nhan /topic/public
+  Bai 2 - bao ten    : gui /app/username    -> nhan /topic/public (JOIN + list online)
+  Chat rieng         : gui /app/private     -> nhan /topic/private/{u1}--{u2}
+
+REST API:
+  POST /api/login                                 dang nhap
+  GET  /api/users                                 danh sach tai khoan
+  GET  /api/history/private?user1=&user2=         lich su chat rieng
+
+===========================================================
+2. INPUT DATA
+===========================================================
+Dang nhap (Panel 2 / Panel 3):
+  u2 / 123   -> Thi No
+  u3 / 123   -> Chi Pheo
+
+Panel 1 (kenh chung): khong can dang nhap, chi nhap ten hien thi, vd: Khach
+
+Aside "Dang online" (cot hep ben phai): CHI HIEN khi da co tai khoan dang nhap.
+  Gom cac phien trung ten lai, vd mo u2 o 2 tab -> "Thi No | 2 ket noi".
+  Moi lan Connect la mot phien rieng, nen cung 1 tai khoan mo nhieu tab
+  van bi dem thanh nhieu ket noi khac nhau.
+
+H2 console:
+  JDBC URL : jdbc:h2:mem:chatdb
+  User Name: sa
+  Password : (de trong)
+  Cau lenh : SELECT * FROM CHAT_HISTORY ORDER BY SENT_AT;
+
+===========================================================
+3. DEMO NHANH
+===========================================================
+Bai 1 (3d): Panel 1 + Panel 2 bam Connect -> go tin -> Send -> ca 2 cung nhan.
+Bai 2 (3d): Connect ca 3 panel -> dong "Dang online (n)" liet ke du ten.
+            Bam Disconnect -> cac panel khac tu bot ten.
+            Sau khi dang nhap con co aside ben phai xem ai dang online.
+Chat rieng (2d): Panel 2 chon "Chat rieng voi Chi Pheo", Panel 3 chon
+            "Chat rieng voi Thi No" -> gui tin -> Panel 1 khong thay.
+Luu lich su (2d): kenh chung KHONG nap tin cu (vao sau khong thay tin truoc do);
+            chat rieng bam Connect lai thi tu nap full lich su tu H2.
+            Tat app roi bat lai -> bang CHAT_HISTORY trong (H2 in-memory).
