@@ -1,5 +1,6 @@
 package com.vn.test.demob1.LAB.model;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -9,6 +10,7 @@ import java.util.List;
  *  - senderName: tên hiển thị của người gửi
  *  - recipient: username người nhận (chỉ dùng cho tin nhắn riêng)
  *  - content: nội dung tin nhắn
+ *  - sentAt: thời điểm gửi (server gán, dùng khi tải lại lịch sử)
  *  - users: danh sách người đang online (cho JOIN/LEAVE)
  */
 public class ChatMessage {
@@ -22,6 +24,7 @@ public class ChatMessage {
     private String senderName;
     private String recipient;
     private String content;
+    private LocalDateTime sentAt;
     private List<String> users;
 
     public ChatMessage() {
@@ -72,6 +75,14 @@ public class ChatMessage {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public LocalDateTime getSentAt() {
+        return sentAt;
+    }
+
+    public void setSentAt(LocalDateTime sentAt) {
+        this.sentAt = sentAt;
     }
 
     public List<String> getUsers() {

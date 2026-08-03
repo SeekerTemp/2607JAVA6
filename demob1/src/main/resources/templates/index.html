@@ -119,6 +119,7 @@
         .msg.mine .who { color: var(--ok); }
         .msg.system { font-style: italic; color: var(--warn); font-size: 12px; }
         .msg.private .who { color: #c084fc; }
+        .msg .time { color: var(--muted); font-size: 11px; margin-right: 4px; }
 
         .users { font-size: 12px; color: var(--muted); }
         .users span { display: inline-block; background: var(--card-2); border-radius: 20px; padding: 2px 9px; margin: 2px 3px 0 0; }
@@ -134,6 +135,11 @@
         Panel 1 là kênh chung (không cần đăng nhập). Panel 2 &amp; 3 phải đăng nhập
         (<code>u2/123</code> &mdash; Thị Nở, <code>u3/123</code> &mdash; Chí Phèo) và có thể chọn kênh:
         chat chung hoặc chat riêng với người còn lại.
+    </p>
+    <p class="subtitle">
+        Lịch sử tin nhắn lưu ở H2 in-memory (xem tại <code>/h2-console</code>, JDBC URL <code>jdbc:h2:mem:chatdb</code>):
+        kênh chung chỉ hiện tin nhắn mới kể từ khi vào phòng, kênh riêng nạp lại đầy đủ lịch sử giữa hai người
+        mỗi lần Connect. Tắt server rồi bật lại thì dữ liệu reset.
     </p>
 
     <div class="panels">
@@ -254,6 +260,8 @@
                         this.client.subscribe("/topic/private/" + room, frame => {
                             this.push("private:" + p.username, JSON.parse(frame.body));
                         });
+                        // Lưu lịch sử: nạp lại toàn bộ tin nhắn riêng đã trao đổi từ trước
+                        this.loadPrivateHistory(p.username);
                     });
 
                     // Bài 2: báo tên lên server để cập nhật danh sách online
@@ -277,6 +285,9 @@
                 }
                 this.connected = false;
                 this.onlineUsers = [];
+                // Xóa sạch khung chat: lần Connect sau kênh chung bắt đầu lại từ đầu,
+                // còn kênh riêng sẽ được nạp lại đầy đủ từ H2 (tránh nhân đôi lịch sử).
+                this.history = { public: [] };
             },
 
             send() {
@@ -299,6 +310,29 @@
                     });
                 }
                 this.content = "";
+            },
+
+            /**
+             * Tải full lịch sử chat riêng với một tài khoản (từ tin nhắn đầu tiên).
+             * Ghép vào TRƯỚC các tin nhắn đã nhận realtime để không mất tin đến trong lúc chờ API.
+             */
+            async loadPrivateHistory(partnerUsername) {
+                const channelId = "private:" + partnerUsername;
+                try {
+                    const url = "/api/history/private?user1=" + encodeURIComponent(this.myUsername)
+                        + "&user2=" + encodeURIComponent(partnerUsername);
+                    const old = await (await fetch(url)).json();
+                    this.history[channelId] = old.concat(this.history[channelId] || []);
+                } catch (e) {
+                    console.error("Không tải được lịch sử chat riêng", e);
+                }
+            },
+
+            // Hiển thị giờ gửi (server trả về dạng ISO: 2026-08-03T10:15:30)
+            formatTime(sentAt) {
+                if (!sentAt) return "";
+                const d = new Date(sentAt);
+                return isNaN(d) ? "" : d.toLocaleTimeString("vi-VN");
             },
 
             push(channelId, msg) {
@@ -370,6 +404,7 @@
                                           m.type === 'PRIVATE' ? 'private' : '',
                                           m.sender === myUsername ? 'mine' : '']">
                                 <template v-if="m.type === 'CHAT' || m.type === 'PRIVATE'">
+                                    <span class="time" v-if="m.sentAt">[{{ formatTime(m.sentAt) }}]</span>
                                     <span class="who">{{ m.senderName }}</span>: {{ m.content }}
                                 </template>
                                 <template v-else>{{ m.content }}</template>

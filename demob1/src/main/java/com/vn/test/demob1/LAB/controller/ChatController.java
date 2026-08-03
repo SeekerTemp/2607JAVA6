@@ -1,6 +1,8 @@
 package com.vn.test.demob1.LAB.controller;
 
+import com.vn.test.demob1.LAB.model.ChatHistory;
 import com.vn.test.demob1.LAB.model.ChatMessage;
+import com.vn.test.demob1.LAB.service.ChatHistoryService;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -28,21 +30,27 @@ public class ChatController {
 
     private final SimpMessagingTemplate messagingTemplate;
 
+    private final ChatHistoryService chatHistoryService;
+
     /** sessionId -&gt; tên hiển thị (danh sách người đang online). */
     private final Map<String, String> onlineUsers = new ConcurrentHashMap<>();
 
-    public ChatController(SimpMessagingTemplate messagingTemplate) {
+    public ChatController(SimpMessagingTemplate messagingTemplate,
+                          ChatHistoryService chatHistoryService) {
         this.messagingTemplate = messagingTemplate;
+        this.chatHistoryService = chatHistoryService;
     }
 
     /**
      * Bài 1: gửi tin nhắn cho mọi người ở kênh chung.
+     * Tin nhắn được ghi vào H2 để giữ đủ lịch sử, nhưng client không tải lại lịch sử này:
+     * mỗi người chỉ đọc được tin nhắn phát sinh từ lúc họ vào phòng.
      */
     @MessageMapping("/chat")
     @SendTo(PUBLIC_TOPIC)
     public ChatMessage send(ChatMessage message) {
         message.setType(ChatMessage.MessageType.CHAT);
-        return message;
+        return chatHistoryService.savePublic(message);
     }
 
     /**
@@ -65,13 +73,14 @@ public class ChatController {
     }
 
     /**
-     * Chat riêng giữa hai tài khoản: đẩy tới đích riêng mà cả hai bên cùng subscribe.
+     * Chat riêng giữa hai tài khoản: lưu lịch sử rồi đẩy tới đích riêng mà cả hai bên cùng subscribe.
      */
     @MessageMapping("/private")
     public void sendPrivate(ChatMessage message) {
         message.setType(ChatMessage.MessageType.PRIVATE);
+        ChatMessage saved = chatHistoryService.savePrivate(message);
         String room = privateRoom(message.getSender(), message.getRecipient());
-        messagingTemplate.convertAndSend(PRIVATE_TOPIC_PREFIX + room, message);
+        messagingTemplate.convertAndSend(PRIVATE_TOPIC_PREFIX + room, saved);
     }
 
     /**
@@ -90,9 +99,10 @@ public class ChatController {
     }
 
     /**
-     * Tên phòng riêng không phụ thuộc thứ tự người gửi/người nhận.
+     * Tên phòng riêng không phụ thuộc thứ tự người gửi/người nhận
+     * (dùng chung quy ước với bản ghi lịch sử để đích STOMP và kênh trong CSDL luôn khớp nhau).
      */
     public static String privateRoom(String a, String b) {
-        return a.compareTo(b) <= 0 ? a + "--" + b : b + "--" + a;
+        return ChatHistory.privateRoom(a, b);
     }
 }
