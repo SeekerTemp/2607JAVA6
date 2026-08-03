@@ -160,3 +160,22 @@ Chat rieng khong nap lai lich su
 
 Sua code xong chay lai van thay giao dien cu
   Trinh duyet cache -> bam Ctrl + F5.
+
+
+//query
+SELECT * FROM CHAT_HISTORY ORDER BY SENT_AT;                          -- xem tất cả
+SELECT * FROM CHAT_HISTORY WHERE ROOM = 'public' ORDER BY SENT_AT;    -- chỉ kênh chung
+SELECT * FROM CHAT_HISTORY WHERE ROOM = 'u2--u3' ORDER BY SENT_AT;    -- chỉ chat riêng
+SELECT ROOM, COUNT(*) AS SO_TIN FROM CHAT_HISTORY GROUP BY ROOM;      -- đếm theo kênh
+SELECT ROOM, SENDER_NAME, CONTENT, SENT_AT FROM CHAT_HISTORY ...;     -- xem gọn
+DELETE FROM CHAT_HISTORY;                                             -- xoá để demo lại
+
+
+PASS  SELECT * ... ORDER BY SENT_AT                (3 rows)
+PASS  WHERE ROOM = 'public'                        (1 row)
+PASS  WHERE ROOM = 'u2--u3'                        (2 rows)
+PASS  GROUP BY ROOM                                public=1 | u2--u3=2
+PASS  xem gon (các tên cột)
+PASS  cột SENDER / RECIPIENT / TYPE / ID tồn tại
+PASS  DELETE FROM CHAT_HISTORY                     Update count: 3
+PASS  sau DELETE bảng rỗng                         CON_LAI = 0
