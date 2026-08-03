@@ -54,11 +54,18 @@ Aside "Dang online" (cot hep ben phai): CHI HIEN khi da co tai khoan dang nhap.
   Moi lan Connect la mot phien rieng, nen cung 1 tai khoan mo nhieu tab
   van bi dem thanh nhieu ket noi khac nhau.
 
-H2 console:
+H2 console (xem lich su da luu):
   JDBC URL : jdbc:h2:mem:chatdb
   User Name: sa
   Password : (de trong)
   Cau lenh : SELECT * FROM CHAT_HISTORY ORDER BY SENT_AT;
+
+  Bang CHAT_HISTORY luu CA tin kenh chung LAN tin nhan rieng.
+  Cot ROOM phan biet: "public" = kenh chung, "u2--u3" = kenh rieng 2 nguoi.
+
+  KHONG CO FILE DB TREN DIA. H2 chay in-memory (jdbc:h2:mem:...) nen du lieu
+  nam trong RAM cua tien trinh Java, tat app la mat - dung yeu cau cua bai.
+  App cung khong ghi file log, log chi in ra console/cua so Run cua IntelliJ.
 
 ===========================================================
 3. DEMO NHANH
