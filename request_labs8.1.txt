@@ -1,0 +1,17 @@
+Lab 8
+
+ĐỀ CHÍNH
+1. Giao diện nhập ghi chú – 1.0 điểm
+Tạo giao diện gồm hai ô input: một cho tên người gửi, một cho nội dung ghi chú.
+2. Gửi ghi chú mới qua REST API – 1.5 điểm
+Khi nhấn enter hoặc nút gửi, ghi chú được gửi lên server thông qua API POST /api/notes.
+3. Lưu ghi chú ở backend – 1.0 điểm
+Server xử lý yêu cầu POST, tạo ghi chú mới với ID, thời gian, và lưu tạm vào mảng hoặc cơ sở dữ liệu.
+4. Phát ghi chú mới qua WebSocket – 2.0 điểm
+Server sử dụng WebSocket (hoặc Socket.IO) để gửi ghi chú mới đến tất cả client đang kết nối.
+5. Nhận và hiển thị ghi chú realtime trên Vue – 2.0 điểm
+Frontend lắng nghe sự kiện WebSocket và cập nhật giao diện ngay khi có ghi chú mới từ người khác.
+6. Hiển thị danh sách ghi chú – 1.5 điểm
+Tất cả ghi chú được hiển thị theo thời gian gửi, phân biệt người gửi và nội dung rõ ràng.
+7. Tự động xóa nội dung ô nhập sau khi gửi – 1.0 điểm
+Sau khi gửi ghi chú, input nội dung được làm rỗng để người dùng nhập mới dễ dàng.

@@ -1,0 +1,39 @@
+ĐỀ PHỤ
+1. API: Lấy tất cả ghi chú – GET /api/notes
+Trả về danh sách các ghi chú, sắp xếp theo thời gian tạo giảm dần.
+2. API: Lấy ghi chú theo ID – GET /api/notes/{id}
+Trả về thông tin chi tiết của ghi chú theo ID. Nếu không tìm thấy → trả 404.
+3. API: Tạo ghi chú mới – POST /api/notes
+	Nhận JSON như sau:
+	{
+	  "author": "An",
+	  "content": "Nhớ chuẩn bị nội dung thuyết trình."
+	}
+Kết quả: thêm mới ghi chú vào DB, trả lại ghi chú vừa tạo (có id và created_at)
+4. API: Cập nhật nội dung ghi chú – PUT /api/notes/{id}
+	Nhận JSON chứa nội dung mới:
+	{
+	  "content": "Đã chuẩn bị xong bài thuyết trình."
+	}
+	Cập nhật ghi chú, set updated_at = Ngày hiện tại. Trả về bản ghi đã cập nhật.
+5. API: Xóa ghi chú – DELETE /api/notes/{id}
+Xóa ghi chú theo ID. Trả về status 200 nếu xóa thành công.
+
+-Cơ sở dữ liệu: NotesDB
+CREATE DATABASE NotesDB;
+GO
+USE NotesDB;
+GO
+CREATE TABLE Notes (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    author NVARCHAR(100) NOT NULL,
+    content NVARCHAR(255) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT GETDATE(),
+    updated_at DATETIME NULL
+);
+GO
+INSERT INTO Notes (author, content) VALUES
+(N'Trung', N'Ghi chú họp nhóm vào thứ Hai.'),
+(N'Lan', N'Nhớ nộp bài trước thứ Sáu.'),
+(N'Bảo', N'Liên hệ giảng viên về deadline.');
+GO
