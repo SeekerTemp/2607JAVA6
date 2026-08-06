@@ -1,0 +1,165 @@
+LAB 8 - GHI CHU REALTIME (Spring Boot + WebSocket + Vue 3 + SQL Server)
+
+De chinh 7 muc (10d) + De phu 5 API.
+Backend : demob1  (Spring Boot 4, SQL Server / NotesDB, STOMP over SockJS)
+Frontend: l8-fe   (Vue 3 + Vite + axios + @stomp/stompjs)
+
+===========================================================
+1. CHUAN BI DATABASE (LAM TRUOC, CHI 1 LAN)
+===========================================================
+Mo SQL Server Management Studio -> New Query -> mo file NotesDB.sql
+o thu muc goc repo -> bam Execute.
+
+Script se tao database NotesDB, bang Notes va them san 3 ghi chu mau.
+Kiem tra lai:  USE NotesDB;  SELECT * FROM Notes;   -> phai thay 3 dong.
+
+Sau do sua tai khoan DB cho khop may ban trong file
+  demob1/src/main/resources/application.properties
+    spring.datasource.username=${MSSQL_USER:sa}
+    spring.datasource.password=${MSSQL_PASSWORD:123456}
+Doi 'sa' / '123456' thanh tai khoan that, hoac dat bien moi truong
+MSSQL_USER / MSSQL_PASSWORD de khoi sua file.
+
+Yeu cau: SQL Server bat che do SQL Authentication va bat TCP/IP cong 1433
+(Sql Server Configuration Manager -> SQL Server Network Configuration
+ -> Protocols -> TCP/IP -> Enabled). Chi bat Windows Authentication thi
+tai khoan sa se khong dang nhap duoc.
+
+===========================================================
+2. CACH CHAY
+===========================================================
+Backend : mo demob1 trong IntelliJ -> chay Demob1Application
+          (hoac terminal tai thu muc demob1 -> mvnw.cmd spring-boot:run)
+Frontend: terminal tai thu muc l8-fe -> npm install -> npm run dev
+
+Phai chay CA HAI. Backend truoc, frontend sau.
+
+===========================================================
+3. URI
+===========================================================
+Giao dien ghi chu : http://localhost:5173     (Vite dev server)
+Backend API       : http://localhost:8080
+
+WebSocket endpoint: /ws  (SockJS)
+  Server phat ghi chu moi -> client subscribe /topic/notes
+
+REST API (de phu):
+  GET    /api/notes        lay tat ca, sap xep created_at giam dan
+  GET    /api/notes/{id}   chi tiet 1 ghi chu, khong co -> 404
+  POST   /api/notes        tao moi, tra 201 + ban ghi co id, created_at
+  PUT    /api/notes/{id}   doi noi dung, set updated_at, tra ban ghi moi
+  DELETE /api/notes/{id}   xoa, tra 200
+
+Body POST : { "author": "An", "content": "Nho chuan bi noi dung thuyet trinh." }
+Body PUT  : { "content": "Da chuan bi xong bai thuyet trinh." }
+author hoac content de trong -> 400.
+
+===========================================================
+4. CAU TRUC CODE
+===========================================================
+com.vn.test.demob1
+  config/     CorsConfig      mo CORS /api/** cho MOI origin (khong gioi han)
+              WebSocketConfig endpoint /ws, broker /topic
+  model/      Note            anh xa dung bang Notes cua NotesDB.sql
+  repository/ NoteRepository  extends JpaRepository<Note, Integer>
+  service/    NoteService (interface) + NoteServiceImpl
+  controller/ NoteController  REST /api/notes
+
+l8-fe/src
+  App.vue                 giao dien: 2 o input + danh sach ghi chu
+  services/notesApi.js    goi REST bang axios
+  services/notesSocket.js noi WebSocket, lang nghe /topic/notes
+
+Anh xa entity theo dung kieu cot cua de bai:
+  id INT IDENTITY   -> Integer + GenerationType.IDENTITY
+  NVARCHAR          -> @Nationalized (giu tieng Viet co dau)
+  created_at        -> set khi @PrePersist, khong cho sua ve sau
+Cau hinh ddl-auto=none: Hibernate KHONG tu tao hay sua bang,
+dung dung bang do NotesDB.sql tao ra.
+
+Luong: nhap -> POST /api/notes -> service luu DB -> broadcast /topic/notes
+       -> MOI client (ke ca nguoi vua gui) nhan va them vao dau danh sach.
+Vi vay nguoi gui khong tu them ghi chu vao mang o client, tranh bi trung.
+Truong hop socket dang rot: client tu them ghi chu vua tao vao danh sach,
+va khi noi lai duoc thi tai lai danh sach cho khop server. Them ghi chu
+deu di qua ham addNote, trung id thi bo qua nen khong bi hien hai lan.
+
+===========================================================
+5. INPUT DATA
+===========================================================
+3 ghi chu mau da nam san trong NotesDB.sql:
+  Trung - Ghi chu hop nhom vao thu Hai.
+  Lan   - Nho nop bai truoc thu Sau.
+  Bao   - Lien he giang vien ve deadline.
+
+Nhap thu: o thu nhat "An", o thu hai "Nho chuan bi noi dung thuyet trinh."
+-> Enter hoac bam Gui.
+
+Xem du lieu trong SSMS:
+  USE NotesDB;
+  SELECT * FROM Notes ORDER BY created_at DESC;
+
+Du lieu nam tren SQL Server nen tat app KHONG mat, khac lab truoc dung H2.
+
+===========================================================
+6. CACH KIEM THU TUNG YEU CAU DE CHINH
+===========================================================
+Muc 1 (2 o input)        : mo localhost:5173, thay o "Ten nguoi gui" + "Noi dung"
+Muc 2 (POST khi Enter)   : nhap xong bam Enter, tab Network thay POST /api/notes
+Muc 3 (luu o backend)    : response co id va createdAt do server sinh;
+                           SELECT * FROM Notes thay dong moi
+Muc 4 (broadcast WS)     : tab Network -> WS, thay frame /topic/notes khi gui
+Muc 5 (realtime tren Vue): MO 2 TAB localhost:5173, gui o tab A
+                           -> tab B tu hien ngay, khong can F5
+Muc 6 (danh sach)        : moi nhat nam tren cung, moi dong ro ten - noi dung - gio
+Muc 7 (xoa o nhap)       : gui xong o noi dung rong, o ten van giu de gui tiep
+
+===========================================================
+7. KET QUA KIEM THU DA CHAY
+===========================================================
+mvnw.cmd test  ->  10 tests, 0 failures
+
+  Demob1ApplicationTests       nap duoc context (JPA + WebSocket)
+  NoteApiTests (8 test)        GET danh sach sap xep giam dan
+                               GET theo id
+                               GET id khong ton tai -> 404
+                               POST -> 201, co id + createdAt
+                               POST content rong -> 400
+                               PUT -> doi content, set updatedAt, giu author
+                               DELETE -> 200, GET lai tra 404
+                               CORS preflight tu 3 origin khac nhau -> 200
+  NoteWebSocketBroadcastTests  noi STOMP that vao /ws, subscribe /topic/notes,
+                               tao ghi chu va nhan duoc payload co
+                               author / content / id / createdAt
+
+Test chay tren H2 o MODE=MSSQLServer voi DUNG schema cua NotesDB.sql
+(src/test/resources/schema.sql), ddl-auto=none giong app that. Lam vay de
+chay duoc test ma khong can bat SQL Server.
+
+npm run build  ->  build thanh cong, 125 modules
+
+CHUA KIEM THU: chua chay thu tren SQL Server that (may viet code khong cai
+SQL Server). Phan can tu kiem lai khi chay lan dau: ket noi JDBC, insert
+IDENTITY, va tieng Viet co dau trong cot NVARCHAR.
+
+===========================================================
+8. LOI THUONG GAP
+===========================================================
+- App khong khoi dong duoc, bao "Cannot open database NotesDB":
+  chua chay NotesDB.sql, hoac sai ten database.
+- Bao "Login failed for user 'sa'":
+  sai password, hoac SQL Server chua bat SQL Authentication.
+- Bao "The TCP/IP connection to the host localhost, port 1433 has failed":
+  chua bat TCP/IP trong Sql Server Configuration Manager, hoac service
+  SQL Server chua chay.
+- Bao loi ve SSL / certificate:
+  chuoi ket noi da co san trustServerCertificate=true, kiem tra lai
+  application.properties xem con dung khong.
+- Tieng Viet luu vao DB bi thanh dau hoi:
+  cot phai la NVARCHAR (dung NotesDB.sql goc), entity phai co @Nationalized.
+- Giao dien khong hien ghi chu, console bao Network Error:
+  chua chay backend, hoac backend khong o cong 8080.
+- npm run dev bao "global is not defined":
+  thieu dinh nghia global trong vite.config.js (da them san).
+- npm run dev bao khong tim thay sockjs-client hoac @stomp/stompjs:
+  chua chay npm install sau khi keo code ve.

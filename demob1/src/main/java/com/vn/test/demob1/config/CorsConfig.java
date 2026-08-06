@@ -9,9 +9,11 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        // Vite dev server default (5173); add more origins here if your l8-fe runs elsewhere
+        // Mo cho moi origin: l8-fe chay o cong 5173, nhung cham bai co the goi
+        // tu Postman, tu may khac hoac tu cong khac -> khong gioi han origin.
+        // Khong bat allowCredentials vi API nay khong dung cookie/session.
         registry.addMapping("/api/**")
-                .allowedOriginPatterns("http://localhost:*")
+                .allowedOriginPatterns("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*");
     }

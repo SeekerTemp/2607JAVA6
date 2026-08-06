@@ -1,24 +1,36 @@
-package com.vn.test.demob1.entity;
+package com.vn.test.demob1.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDateTime;
 
 /**
- * Maps to the Notes table described in request_labs8.2 (đề phụ):
- * id, author, content, created_at, updated_at
+ * Ghi chú - ánh xạ đúng bảng Notes của NotesDB.sql (đề phụ):
+ * id INT IDENTITY(1,1), author NVARCHAR(100), content NVARCHAR(255),
+ * created_at DATETIME NOT NULL, updated_at DATETIME NULL
  */
 @Entity
-@Table(name = "notes")
+@Table(name = "Notes")
 public class Note {
 
+    // id trong đề là INT nên dùng Integer, không dùng Long
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
+    // @Nationalized: cột NVARCHAR, giữ được tiếng Việt có dấu
+    @Nationalized
     @Column(nullable = false, length = 100)
     private String author;
 
+    @Nationalized
     @Column(nullable = false, length = 255)
     private String content;
 
@@ -31,16 +43,24 @@ public class Note {
     public Note() {
     }
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+    public Note(String author, String content) {
+        this.author = author;
+        this.content = content;
     }
 
-    public Long getId() {
+    // đề phụ #3: ghi chú mới luôn có created_at do server sinh
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+    }
+
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

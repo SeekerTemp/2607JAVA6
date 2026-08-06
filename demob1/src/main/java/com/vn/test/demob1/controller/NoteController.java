@@ -1,12 +1,17 @@
 package com.vn.test.demob1.controller;
 
-import com.vn.test.demob1.dto.NoteCreateRequest;
-import com.vn.test.demob1.dto.NoteUpdateRequest;
-import com.vn.test.demob1.entity.Note;
+import com.vn.test.demob1.model.Note;
 import com.vn.test.demob1.service.NoteService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -26,28 +31,28 @@ public class NoteController {
         return noteService.getAllNotes();
     }
 
-    // GET /api/notes/{id} -> 404 handled inside service via ResponseStatusException
+    // GET /api/notes/{id} - service ném 404 nếu không có
     @GetMapping("/{id}")
-    public Note getNoteById(@PathVariable Long id) {
+    public Note getNoteById(@PathVariable Integer id) {
         return noteService.getNoteById(id);
     }
 
-    // POST /api/notes -> also broadcasts over WebSocket
+    // POST /api/notes - body { "author": "An", "content": "..." }
     @PostMapping
-    public ResponseEntity<Note> createNote(@RequestBody NoteCreateRequest request) {
-        Note created = noteService.createNote(request.author(), request.content());
+    public ResponseEntity<Note> createNote(@RequestBody Note request) {
+        Note created = noteService.createNote(request.getAuthor(), request.getContent());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    // PUT /api/notes/{id}
+    // PUT /api/notes/{id} - body { "content": "..." }
     @PutMapping("/{id}")
-    public Note updateNote(@PathVariable Long id, @RequestBody NoteUpdateRequest request) {
-        return noteService.updateNote(id, request.content());
+    public Note updateNote(@PathVariable Integer id, @RequestBody Note request) {
+        return noteService.updateNote(id, request.getContent());
     }
 
-    // DELETE /api/notes/{id}
+    // DELETE /api/notes/{id} - 200 khi xóa xong
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteNote(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteNote(@PathVariable Integer id) {
         noteService.deleteNote(id);
         return ResponseEntity.ok().build();
     }

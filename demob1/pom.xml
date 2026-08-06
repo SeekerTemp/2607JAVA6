@@ -34,34 +34,36 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
-        <!-- Giao diện đặt trong src/main/resources/templates -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
-        </dependency>
         <!-- LAB 8: WebSocket + STOMP -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
-        <!-- LAB 8: lưu lịch sử ghi chú vào H2 (in-memory, tắt app là mất) -->
+        <!-- LAB 8: lưu ghi chú vào SQL Server, database NotesDB theo schema đề bài -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
             <scope>runtime</scope>
         </dependency>
-        <!-- Spring Boot 4 tách H2 console ra module riêng, thiếu nó thì /h2-console trả 404 -->
+        <!-- H2 chỉ dùng khi chạy test, để không cần bật SQL Server mới test được -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-h2console</artifactId>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- TestRestTemplate trong Spring Boot 4 can them RestTemplateBuilder o module nay -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-restclient</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
