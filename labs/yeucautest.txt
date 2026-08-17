@@ -95,8 +95,11 @@ Mục 10. (2đ) Hiển thị dữ liệu API mục 3 bằng bảng trên VueJS
       axios gửi Basic Auth bằng: auth: { username, password }
 
    CÁCH DỰ PHÒNG - nếu phòng thi không có mạng để npm install:
-   -> demau\src\main\resources\static\index.html (Vue CDN offline, cùng port 8080,
-      không cần CORS). Mở http://localhost:8080/
+   -> demau\src\main\resources\static\index.html (Vue nhúng sẵn file
+      vue.global.prod.js, cùng port 8080 nên KHÔNG cần CORS).
+      Mở http://localhost:8080/
+      Bản này CHỈ HIỂN THỊ BẢNG (đủ mục 10), không có form thêm/sửa/xoá
+      như demau-fe. Thêm/sửa/xoá lúc đó demo bằng Postman.
 
 Mục 11. Trừ điểm: gọi sai lớp / sai chức năng 0.5đ, thiếu lớp 0.5đ.
 
