@@ -18,7 +18,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
-                .httpBasic(Customizer.withDefaults())
+                .httpBasic(Customizer.withDefaults())   // cho Postman / axios gui Basic Auth
+                .formLogin(Customizer.withDefaults())   // Spring tu sinh trang login /login
                 .build();
     }
 }

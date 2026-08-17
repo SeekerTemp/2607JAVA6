@@ -57,7 +57,23 @@ Mục 8. (1đ) Validate, trả 400 Bad Request khi thêm và sửa
        "tongTien":"Tong tien phai lon hon 0"}
 
 Mục 9. (1đ) Spring Security, đăng nhập trước khi dùng mọi API, account MSSV - Lớp
-   -> config\SecurityConfig.java: /api/** phải authenticated, httpBasic.
+   -> config\SecurityConfig.java, 1 bean SecurityFilterChain gồm:
+         .authorizeHttpRequests  /api/** phải authenticated, còn lại permitAll
+         .httpBasic              cho Postman / axios gửi Basic Auth
+         .formLogin              Spring TỰ SINH trang login ở /login
+         .csrf(disable)          để Postman POST/PUT/DELETE không cần token
+         .cors                   cho Vue khác port gọi được (mục 10)
+
+      LƯU Ý: tự khai SecurityFilterChain thì mặc định của Boot mất hết,
+      khai gì có nấy. KHÔNG có dòng .formLogin thì KHÔNG có trang /login,
+      trình duyệt chỉ hiện popup Basic Auth xám xám của chính nó.
+
+      Có cả httpBasic lẫn formLogin thì Spring tự chọn theo client:
+         Postman / axios (không auth)      -> 401 + WWW-Authenticate: Basic
+         Trình duyệt (Accept: text/html)   -> 302 redirect về /login
+      Đăng nhập form đúng -> 302 về "/", sai -> 302 về /login?error.
+      Đăng nhập rồi thì có cookie phiên, gọi API không cần Basic Auth nữa.
+
       Tài khoản khai trong application.properties:
          spring.security.user.name=PH12345      <-- ĐỔI THÀNH MSSV
          spring.security.user.password=SOF3062  <-- ĐỔI THÀNH LỚP
@@ -97,7 +113,8 @@ Mục 11. Trừ điểm: gọi sai lớp / sai chức năng 0.5đ, thiếu lớp
   3. service: interface khai 5 method, Impl inject repository qua constructor
   4. controller: @RestController @RequestMapping("/api/don-hang")
                  @GetMapping / @PostMapping / @PutMapping("/{id}") / @DeleteMapping("/{id}")
-  5. SecurityConfig: @Bean SecurityFilterChain, csrf disable, /api/** authenticated, httpBasic
+  5. SecurityConfig: @Bean SecurityFilterChain, csrf disable, cors,
+                     /api/** authenticated, httpBasic + formLogin
 
 
 ===========================================================================
@@ -122,6 +139,10 @@ B3. Chạy app
     Nếu port 8080 đang bận:
         mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8081
     (Chạy bằng IntelliJ: mở demau\pom.xml as Project, Run DemauApplication.)
+
+B3b. Xem trang login của Spring (mục 9)
+    http://localhost:8080/api/don-hang  bằng trình duyệt -> tự nhảy sang /login
+    Đăng nhập PH12345 / SOF3062 -> vào được, từ đó gọi API không cần auth nữa.
 
 B4. Chạy frontend Vue (mục 10) - mở CỬA SỔ TERMINAL THỨ 2, backend vẫn chạy
         cd demau-fe
