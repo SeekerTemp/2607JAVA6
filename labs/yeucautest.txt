@@ -67,8 +67,8 @@ Mục 10. (2đ) Hiển thị dữ liệu API mục 3 bằng bảng trên VueJS
    -> demau-fe\   Vite + Vue 3 + axios, chạy port 5173, gọi API port 8080
         src\App.vue   toàn bộ logic nằm ở đây, làm đủ CRUD:
                       - bảng danh sách (v-for)                    mục 3
-                      - form Thêm/Sửa dùng chung, có id -> PUT,
-                        không id -> POST                          mục 4, 5
+                      - form dùng chung, nút [Them] gọi POST     mục 4
+                        nút [Luu] gọi PUT (chỉ hiện khi đang sửa) mục 5
                       - mỗi dòng có nút [Sua] [Xoa]               mục 5, 6
                       - lỗi 400 hiện đỏ ngay cạnh ô nhập          mục 8
         src\main.js   createApp(App).mount('#app')

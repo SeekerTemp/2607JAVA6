@@ -16,23 +16,29 @@ const load = async () => {
   list.value = (await api.get('/don-hang')).data
 }
 
-// them (muc 4) va sua (muc 5) dung chung 1 form: co id thi PUT, khong thi POST
-const luu = async () => {
-  const body = {
-    khachHang: { id: form.value.khachHangId },
-    maDonHang: form.value.maDonHang,
-    ngayDat: form.value.ngayDat || null,
-    tongTien: form.value.tongTien
-  }
+const body = () => ({
+  khachHang: { id: form.value.khachHangId },
+  maDonHang: form.value.maDonHang,
+  ngayDat: form.value.ngayDat || null,
+  tongTien: form.value.tongTien
+})
+
+// goi API roi lam moi bang; neu 400 thi hien loi tung field (muc 8)
+const goi = async (req) => {
   try {
-    if (form.value.id) await api.put('/don-hang/' + form.value.id, body)
-    else await api.post('/don-hang', body)
+    await req
     huy()
     load()
   } catch (e) {
-    loi.value = e.response.data   // 400 Bad Request -> hien loi tung field
+    loi.value = e.response.data
   }
 }
+
+// nut Them - them ban ghi moi (muc 4)
+const them = () => goi(api.post('/don-hang', body()))
+
+// nut Luu - luu ban ghi dang sua (muc 5)
+const luu = () => goi(api.put('/don-hang/' + form.value.id, body()))
 
 const sua = (dh) => {
   form.value = { id: dh.id, khachHangId: 1, maDonHang: dh.maDonHang, ngayDat: dh.ngayDat, tongTien: dh.tongTien }
@@ -72,7 +78,8 @@ onMounted(load)
     <span style="color:red">{{ loi.tongTien }}</span>
   </p>
   <p>
-    <button @click="luu">Luu</button>
+    <button v-if="!form.id" @click="them">Them</button>
+    <button v-if="form.id" @click="luu">Luu</button>
     <button @click="huy">Huy</button>
   </p>
 
