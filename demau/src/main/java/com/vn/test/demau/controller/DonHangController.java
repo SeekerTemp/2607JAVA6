@@ -10,6 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/don-hang")
+@CrossOrigin(origins = "http://localhost:5173") // cho Vue (Vite) goi API khac port
 public class DonHangController {
 
     private final DonHangService donHangService;

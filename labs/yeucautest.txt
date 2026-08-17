@@ -52,10 +52,19 @@ Mục 9. (1đ) Spring Security, đăng nhập trước khi dùng mọi API, acco
          spring.security.user.password=SOF3062  <-- ĐỔI THÀNH LỚP
 
 Mục 10. (2đ) Hiển thị dữ liệu API mục 3 bằng bảng trên VueJS
-   -> src\main\resources\static\index.html  (Vue 3, mở http://localhost:8080/)
-      Vue nhúng bằng file vue.global.prod.js copy sẵn -> chạy được cả khi mất mạng.
-      fetch gửi header Basic Auth (btoa('PH12345:SOF3062')) vì mục 9 bắt đăng nhập.
-      >>> Đổi tài khoản ở properties thì phải đổi cả dòng btoa() trong index.html.
+   CÁCH CHÍNH - project Vue riêng (giống lúc đi thi):
+   -> demau-fe\   Vite + Vue 3 + axios, chạy port 5173, gọi API port 8080
+        src\App.vue   toàn bộ logic nằm ở đây (axios + v-for)
+        src\main.js   createApp(App).mount('#app')
+      Khác port = CROSS ORIGIN, phải mở CORS ở backend:
+        controller\DonHangController: @CrossOrigin(origins="http://localhost:5173")
+        config\SecurityConfig:        .cors(Customizer.withDefaults())
+      Thiếu 1 trong 2 dòng đó -> F12 báo "blocked by CORS policy", bảng trống.
+      axios gửi Basic Auth bằng: auth: { username, password }
+
+   CÁCH DỰ PHÒNG - nếu phòng thi không có mạng để npm install:
+   -> demau\src\main\resources\static\index.html (Vue CDN offline, cùng port 8080,
+      không cần CORS). Mở http://localhost:8080/
 
 Mục 11. Trừ điểm: gọi sai lớp / sai chức năng 0.5đ, thiếu lớp 0.5đ.
 
@@ -87,6 +96,9 @@ B2. Sửa demau\src\main\resources\application.properties
     - Tài khoản SQL Server: mặc định sa / 123456.
       Khác thì sửa trực tiếp, hoặc set biến môi trường MSSQL_USER, MSSQL_PASSWORD.
     - Tài khoản đăng nhập API: đổi PH12345 / SOF3062 thành MSSV / Lớp của mình.
+      Đổi rồi thì sửa luôn 2 chỗ frontend:
+        demau-fe\src\App.vue                       (auth: { username, password })
+        demau\src\main\resources\static\index.html  (btoa('user:pass'))
 
 B3. Chạy app
         cd demau
@@ -95,8 +107,13 @@ B3. Chạy app
         mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8081
     (Chạy bằng IntelliJ: mở demau\pom.xml as Project, Run DemauApplication.)
 
-B4. Xem trang Vue (mục 10)
-    http://localhost:8080/    -> bảng 15 đơn hàng.
+B4. Chạy frontend Vue (mục 10) - mở CỬA SỔ TERMINAL THỨ 2, backend vẫn chạy
+        cd demau-fe
+        npm install        (chỉ chạy lần đầu, cần mạng)
+        npm run dev
+    Mở http://localhost:5173/  -> bảng 15 đơn hàng.
+
+    Không có mạng để npm install -> dùng bản dự phòng: http://localhost:8080/
 
 B5. Test API bằng Postman (nhớ tab Authorization -> Basic Auth: PH12345 / SOF3062)
 
