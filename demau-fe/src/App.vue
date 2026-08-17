@@ -9,21 +9,78 @@ const api = axios.create({
 })
 
 const list = ref([])
+const form = ref({ id: null, khachHangId: 1, maDonHang: '', ngayDat: '', tongTien: 0 })
+const loi = ref({})   // map field -> message do ApiExceptionHandler tra ve (muc 8)
 
 const load = async () => {
-  const res = await api.get('/don-hang')
-  list.value = res.data
+  list.value = (await api.get('/don-hang')).data
+}
+
+// them (muc 4) va sua (muc 5) dung chung 1 form: co id thi PUT, khong thi POST
+const luu = async () => {
+  const body = {
+    khachHang: { id: form.value.khachHangId },
+    maDonHang: form.value.maDonHang,
+    ngayDat: form.value.ngayDat || null,
+    tongTien: form.value.tongTien
+  }
+  try {
+    if (form.value.id) await api.put('/don-hang/' + form.value.id, body)
+    else await api.post('/don-hang', body)
+    huy()
+    load()
+  } catch (e) {
+    loi.value = e.response.data   // 400 Bad Request -> hien loi tung field
+  }
+}
+
+const sua = (dh) => {
+  form.value = { id: dh.id, khachHangId: 1, maDonHang: dh.maDonHang, ngayDat: dh.ngayDat, tongTien: dh.tongTien }
+  loi.value = {}
+}
+
+// xoa (muc 6)
+const xoa = async (id) => {
+  await api.delete('/don-hang/' + id)
+  load()
+}
+
+const huy = () => {
+  form.value = { id: null, khachHangId: 1, maDonHang: '', ngayDat: '', tongTien: 0 }
+  loi.value = {}
 }
 
 onMounted(load)
 </script>
 
 <template>
+  <h2>{{ form.id ? 'Sua don hang #' + form.id : 'Them don hang' }}</h2>
+  <p>
+    Khach hang ID: <input v-model="form.khachHangId" size="3">
+    <span style="color:red">{{ loi.khachHang }}</span>
+  </p>
+  <p>
+    Ma don hang: <input v-model="form.maDonHang">
+    <span style="color:red">{{ loi.maDonHang }}</span>
+  </p>
+  <p>
+    Ngay dat: <input v-model="form.ngayDat" type="date">
+    <span style="color:red">{{ loi.ngayDat }}</span>
+  </p>
+  <p>
+    Tong tien: <input v-model="form.tongTien" type="number">
+    <span style="color:red">{{ loi.tongTien }}</span>
+  </p>
+  <p>
+    <button @click="luu">Luu</button>
+    <button @click="huy">Huy</button>
+  </p>
+
   <h2>Danh sach Don hang</h2>
   <table border="1" cellpadding="6" cellspacing="0">
     <tr>
       <th>ID</th><th>Ma don hang</th><th>Ngay dat</th>
-      <th>Tong tien</th><th>Ten khach hang</th><th>Dia chi</th>
+      <th>Tong tien</th><th>Ten khach hang</th><th>Dia chi</th><th>Thao tac</th>
     </tr>
     <tr v-for="dh in list" :key="dh.id">
       <td>{{ dh.id }}</td>
@@ -32,6 +89,10 @@ onMounted(load)
       <td>{{ dh.tongTien }}</td>
       <td>{{ dh.tenKhachHang }}</td>
       <td>{{ dh.diaChi }}</td>
+      <td>
+        <button @click="sua(dh)">Sua</button>
+        <button @click="xoa(dh.id)">Xoa</button>
+      </td>
     </tr>
   </table>
 </template>

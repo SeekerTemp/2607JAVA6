@@ -23,7 +23,8 @@ Mục 2. Đúng cấu trúc tầng: entity, repository, service, controller
       repository\  DonHangRepository, KhachHangRepository (extends JpaRepository)
       service\     DonHangService (interface) + DonHangServiceImpl
       controller\  DonHangController
-      (thêm dto\DonHangDTO và config\SecurityConfig - xem mục 3 và 9)
+      (thêm dto\DonHangDTO, config\SecurityConfig, util\ApiExceptionHandler
+       - xem mục 3, 9, 8)
 
 Mục 3. (2đ) GET hiển thị danh sách Đơn hàng dạng JSON array, có tenKhachHang
        và diaChi lấy từ bảng Khách hàng
@@ -41,9 +42,19 @@ Mục 7. (1đ) Phân trang 5 phần tử/trang, JSON như mục 3
       service dùng PageRequest.of(page, 5)
 
 Mục 8. (1đ) Validate, trả 400 Bad Request khi thêm và sửa
-   -> Annotation trên entity\DonHang: @NotBlank maDonHang, @NotNull ngayDat,
-      @NotNull + @Positive tongTien, @NotNull khachHang.
-      Controller đặt @Valid trước @RequestBody -> Spring tự trả 400.
+   Gồm 3 mảnh, thiếu 1 là hỏng:
+   1) entity\DonHang: @NotBlank maDonHang, @NotNull ngayDat,
+      @NotNull + @Positive tongTien, @NotNull khachHang
+   2) controller: @Valid ĐẶT TRƯỚC @RequestBody  <-- quên chữ này là annotation
+                                                     ở entity vô tác dụng
+   3) util\ApiExceptionHandler: @RestControllerAdvice bắt
+      MethodArgumentNotValidException -> 400 + Map{field: message}
+      (không có class này Spring vẫn trả 400 nhưng body chung chung,
+       không nói field nào sai)
+   Postman nhận được:
+      {"maDonHang":"Ma don hang khong duoc de trong",
+       "ngayDat":"Ngay dat khong duoc de trong",
+       "tongTien":"Tong tien phai lon hon 0"}
 
 Mục 9. (1đ) Spring Security, đăng nhập trước khi dùng mọi API, account MSSV - Lớp
    -> config\SecurityConfig.java: /api/** phải authenticated, httpBasic.
@@ -54,7 +65,12 @@ Mục 9. (1đ) Spring Security, đăng nhập trước khi dùng mọi API, acco
 Mục 10. (2đ) Hiển thị dữ liệu API mục 3 bằng bảng trên VueJS
    CÁCH CHÍNH - project Vue riêng (giống lúc đi thi):
    -> demau-fe\   Vite + Vue 3 + axios, chạy port 5173, gọi API port 8080
-        src\App.vue   toàn bộ logic nằm ở đây (axios + v-for)
+        src\App.vue   toàn bộ logic nằm ở đây, làm đủ CRUD:
+                      - bảng danh sách (v-for)                    mục 3
+                      - form Thêm/Sửa dùng chung, có id -> PUT,
+                        không id -> POST                          mục 4, 5
+                      - mỗi dòng có nút [Sua] [Xoa]               mục 5, 6
+                      - lỗi 400 hiện đỏ ngay cạnh ô nhập          mục 8
         src\main.js   createApp(App).mount('#app')
       Khác port = CROSS ORIGIN, phải mở CORS ở backend:
         controller\DonHangController: @CrossOrigin(origins="http://localhost:5173")
