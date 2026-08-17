@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sach Don hang</title>
+    <script src="/vue.global.prod.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { border-collapse: collapse; }
+        th, td { border: 1px solid #999; padding: 6px 12px; }
+        th { background: #eee; }
+    </style>
+</head>
+<body>
+<div id="app">
+    <h2>Danh sach Don hang</h2>
+    <table>
+        <tr>
+            <th>ID</th><th>Ma don hang</th><th>Ngay dat</th>
+            <th>Tong tien</th><th>Ten khach hang</th><th>Dia chi</th>
+        </tr>
+        <tr v-for="dh in list" :key="dh.id">
+            <td>{{ dh.id }}</td>
+            <td>{{ dh.maDonHang }}</td>
+            <td>{{ dh.ngayDat }}</td>
+            <td>{{ dh.tongTien }}</td>
+            <td>{{ dh.tenKhachHang }}</td>
+            <td>{{ dh.diaChi }}</td>
+        </tr>
+    </table>
+</div>
+<script>
+    const { createApp, ref, onMounted } = Vue;
+    createApp({
+        setup() {
+            const list = ref([]);
+            onMounted(async () => {
+                const res = await fetch('/api/don-hang', {
+                    headers: { Authorization: 'Basic ' + btoa('PH12345:SOF3062') }
+                });
+                list.value = await res.json();
+            });
+            return { list };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>

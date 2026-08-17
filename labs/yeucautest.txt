@@ -1,0 +1,143 @@
+Test:
+Yêu cầu: Hoàn thành đề mẫu ref\DeMau.docx với db ref\DeMau.sql
+- Code ngắn gọn nhất có thể, không làm điều kiện nhánh nếu đề không yêu cầu, kể cả sai nghiệp vụ
+- Code ngắn gọn nhất có thể trong khoảng thời gian cho phép 50p
+- Code ngắn gọn nhất có thể để đọc và học thuộc dễ dàng
+- Chắc chắn đủ tầng repository,service,controller
+
+
+===========================================================================
+ĐỀ MẪU - SOF3062 - LẬP TRÌNH JAVA 6  (60 phút, tổng 10 điểm)
+Bài làm: thư mục demau\   (Spring Boot 4.1.0, Java 17, SQL Server)
+===========================================================================
+
+--- NỘI DUNG ĐỀ & ĐỐI CHIẾU BÀI LÀM ---
+
+Mục 1. Dùng DB DeMau.sql (bảng khach_hang, don_hang), map đúng entity class
+   -> entity\KhachHang.java, entity\DonHang.java
+      Map ĐẦY ĐỦ mọi cột. @Nationalized cho cột NVARCHAR (tiếng Việt có dấu).
+      @ManyToOne khach_hang_id nối DonHang -> KhachHang.
+
+Mục 2. Đúng cấu trúc tầng: entity, repository, service, controller
+   -> entity\      KhachHang, DonHang
+      repository\  DonHangRepository, KhachHangRepository (extends JpaRepository)
+      service\     DonHangService (interface) + DonHangServiceImpl
+      controller\  DonHangController
+      (thêm dto\DonHangDTO và config\SecurityConfig - xem mục 3 và 9)
+
+Mục 3. (2đ) GET hiển thị danh sách Đơn hàng dạng JSON array, có tenKhachHang
+       và diaChi lấy từ bảng Khách hàng
+   -> GET /api/don-hang
+      dto\DonHangDTO.java: id, maDonHang, ngayDat, tongTien, tenKhachHang, diaChi
+      BẮT BUỘC có DTO: đề chỉ cho 6 field, trong đó 2 field nằm ở bảng khác.
+      Trả thẳng entity sẽ dư field và lộ quan hệ khachHang -> sai định dạng đề.
+
+Mục 4. (1đ) POST thêm 1 đơn hàng      -> POST   /api/don-hang
+Mục 5. (1đ) PUT sửa đơn hàng theo ID  -> PUT    /api/don-hang/{id}
+Mục 6. (1đ) DELETE xóa theo ID        -> DELETE /api/don-hang/{id}
+
+Mục 7. (1đ) Phân trang 5 phần tử/trang, JSON như mục 3
+   -> GET /api/don-hang/page?page=0
+      service dùng PageRequest.of(page, 5)
+
+Mục 8. (1đ) Validate, trả 400 Bad Request khi thêm và sửa
+   -> Annotation trên entity\DonHang: @NotBlank maDonHang, @NotNull ngayDat,
+      @NotNull + @Positive tongTien, @NotNull khachHang.
+      Controller đặt @Valid trước @RequestBody -> Spring tự trả 400.
+
+Mục 9. (1đ) Spring Security, đăng nhập trước khi dùng mọi API, account MSSV - Lớp
+   -> config\SecurityConfig.java: /api/** phải authenticated, httpBasic.
+      Tài khoản khai trong application.properties:
+         spring.security.user.name=PH12345      <-- ĐỔI THÀNH MSSV
+         spring.security.user.password=SOF3062  <-- ĐỔI THÀNH LỚP
+
+Mục 10. (2đ) Hiển thị dữ liệu API mục 3 bằng bảng trên VueJS
+   -> src\main\resources\static\index.html  (Vue 3, mở http://localhost:8080/)
+      Vue nhúng bằng file vue.global.prod.js copy sẵn -> chạy được cả khi mất mạng.
+      fetch gửi header Basic Auth (btoa('PH12345:SOF3062')) vì mục 9 bắt đăng nhập.
+      >>> Đổi tài khoản ở properties thì phải đổi cả dòng btoa() trong index.html.
+
+Mục 11. Trừ điểm: gọi sai lớp / sai chức năng 0.5đ, thiếu lớp 0.5đ.
+
+
+--- LUỒNG CODE (học thuộc theo thứ tự này) ---
+
+  Controller  ->  Service (interface + Impl)  ->  Repository  ->  Entity
+                       |
+                       +--> DTO (chỉ để định dạng JSON trả về)
+
+  1. entity: @Entity @Table(name="...") + @Id @GeneratedValue(IDENTITY)
+             + @Column(name="cot_snake_case") + @ManyToOne @JoinColumn
+  2. repository: interface extends JpaRepository<Entity, Integer>  (không viết gì thêm)
+  3. service: interface khai 5 method, Impl inject repository qua constructor
+  4. controller: @RestController @RequestMapping("/api/don-hang")
+                 @GetMapping / @PostMapping / @PutMapping("/{id}") / @DeleteMapping("/{id}")
+  5. SecurityConfig: @Bean SecurityFilterChain, csrf disable, /api/** authenticated, httpBasic
+
+
+===========================================================================
+HƯỚNG DẪN CHẠY
+===========================================================================
+
+B1. Tạo database
+    Mở SSMS -> chạy toàn bộ file ref\DeMau.sql (tạo DB DeMauSOF3062,
+    2 bảng + 5 khách hàng + 15 đơn hàng).
+
+B2. Sửa demau\src\main\resources\application.properties
+    - Tài khoản SQL Server: mặc định sa / 123456.
+      Khác thì sửa trực tiếp, hoặc set biến môi trường MSSQL_USER, MSSQL_PASSWORD.
+    - Tài khoản đăng nhập API: đổi PH12345 / SOF3062 thành MSSV / Lớp của mình.
+
+B3. Chạy app
+        cd demau
+        mvnw spring-boot:run
+    Nếu port 8080 đang bận:
+        mvnw spring-boot:run -Dspring-boot.run.arguments=--server.port=8081
+    (Chạy bằng IntelliJ: mở demau\pom.xml as Project, Run DemauApplication.)
+
+B4. Xem trang Vue (mục 10)
+    http://localhost:8080/    -> bảng 15 đơn hàng.
+
+B5. Test API bằng Postman (nhớ tab Authorization -> Basic Auth: PH12345 / SOF3062)
+
+    GET     http://localhost:8080/api/don-hang
+    GET     http://localhost:8080/api/don-hang/page?page=0     (5 bản ghi/trang)
+    POST    http://localhost:8080/api/don-hang
+    PUT     http://localhost:8080/api/don-hang/16
+    DELETE  http://localhost:8080/api/don-hang/16
+
+    Body cho POST / PUT (raw - JSON):
+    {
+      "khachHang": { "id": 2 },
+      "maDonHang": "DH999",
+      "ngayDat": "2025-08-17",
+      "tongTien": 123000,
+      "diaChiGiao": "Hai Phong",
+      "soDienThoaiGiao": "0912345678",
+      "ghiChu": "Giao gap",
+      "trangThai": "Cho xac nhan",
+      "nguoiXuLy": "Nguyen Van A"
+    }
+
+    Body test VALIDATE (mục 8) - POST hoặc PUT với body này phải ra 400:
+    {
+      "khachHang": { "id": 2 },
+      "maDonHang": "",
+      "ngayDat": null,
+      "tongTien": -5
+    }
+    (rỗng -> @NotBlank, null -> @NotNull, số âm -> @Positive)
+
+    Kết quả mong đợi:
+      - Không gửi Basic Auth            -> 401 Unauthorized   (mục 9)
+      - Bỏ maDonHang hoặc tongTien âm   -> 400 Bad Request    (mục 8)
+      - GET trả JSON đúng 6 field:
+        [{"id":1,"maDonHang":"DH001","ngayDat":"2025-08-01","tongTien":1500000.0,
+          "tenKhachHang":"Nguyen Van A","diaChi":"Ha Noi"}]
+
+LỖI HAY GẶP
+    - "Port 8080 was already in use"     -> đổi port như B3.
+    - "Login failed for user 'sa'"       -> sai user/pass SQL Server ở B2.
+    - "Invalid object name 'don_hang'"   -> chưa chạy DeMau.sql, hoặc sai databaseName.
+    - Tiếng Việt hiển thị dấu hỏi        -> thiếu @Nationalized ở entity.
+    - Trang Vue trống, F12 báo 401       -> tài khoản trong btoa() khác properties.
